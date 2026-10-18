@@ -212,7 +212,9 @@ def test_mutate_add_multiple(tools):
 # ---------------------------------------------------------------------------
 
 
-def test_mutate_soft_delete_hides_from_get(tools, db_with_data):
+def test_mutate_soft_delete_hides_from_list_but_stays_resolvable(tools, db_with_data):
+    """Soft delete hides a bookmark from default listing, but its URI still
+    resolves (flagged archived) so references to it survive (workspace C1)."""
     db, _ = db_with_data
     bm = db.list()[0]
     uid = bm.unique_id
@@ -220,9 +222,8 @@ def test_mutate_soft_delete_hides_from_get(tools, db_with_data):
     result = tools["mutate"]([{"op": "delete", "id": bm.id}])
     assert result["succeeded"] == 1
 
-    # After soft delete, get_record should raise
-    with pytest.raises(ValueError):
-        tools["get_record"]("bookmark", uid)
+    assert uid not in {b.unique_id for b in db.list()}
+    assert tools["get_record"]("bookmark", uid)["archived_at"] is not None
 
 
 def test_mutate_soft_delete_record_still_exists_with_include_archived(tools, db_with_data):
@@ -557,3 +558,46 @@ def test_create_server_has_required_tools(tmp_db_path):
     tool_names = {t.name for t in tools}
     required = {"get_schema", "execute_sql", "get_record", "mutate", "import_bookmarks", "export_bookmarks"}
     assert required.issubset(tool_names)
+
+
+# ---------------------------------------------------------------------------
+# get_record_kinds (archive-contract record-kind declaration)
+# ---------------------------------------------------------------------------
+
+
+def test_record_kinds_match_uri_kinds():
+    from bookmark_memex.mcp import RECORD_KEY_COLUMNS
+    from bookmark_memex.uri import KINDS
+
+    assert set(RECORD_KEY_COLUMNS) == KINDS
+
+
+def test_every_declared_kind_resolves(tools, db_with_data):
+    import sqlite3
+    from datetime import datetime
+
+    db, db_path = db_with_data
+    db.merge_history_url(unique_id="hu1", url="https://h.example")
+    db.merge_history_visit(
+        unique_id="hv1", url_unique_id="hu1", visited_at=datetime(2026, 1, 1),
+        source_type="chrome", source_name="test",
+    )
+    kinds = tools["get_record_kinds"]()["kinds"]
+    assert {k["kind"] for k in kinds} == {"bookmark", "marginalia", "history-url", "visit"}
+    with sqlite3.connect(db_path) as conn:
+        for k in kinds:
+            (raw_id,) = conn.execute(
+                f'SELECT `{k["id_column"]}` FROM `{k["table"]}` LIMIT 1'
+            ).fetchone()
+            assert isinstance(tools["get_record"](k["kind"], raw_id), dict), k
+
+
+def test_get_record_resolves_archived_bookmark(tools, db_with_data):
+    """Regression: archived bookmarks resolved as 'not found', breaking
+    trails and marginalia that reference them (workspace C1)."""
+    db, _ = db_with_data
+    bm = db.list()[0]
+    db.delete(bm.id)  # soft delete
+    result = tools["get_record"]("bookmark", bm.unique_id)
+    assert result["unique_id"] == bm.unique_id
+    assert result["archived_at"] is not None

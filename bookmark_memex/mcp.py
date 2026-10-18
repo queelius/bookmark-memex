@@ -25,6 +25,18 @@ from typing import Any, Optional
 
 from bookmark_memex.config import get_config
 from bookmark_memex.db import Database
+from bookmark_memex.models import Bookmark, HistoryUrl, HistoryVisit, Marginalia
+from bookmark_memex.uri import _LEGACY_KIND_ALIASES, KINDS
+
+# URI kind -> the ORM column holding that kind's raw id: the storage side of
+# uri.KINDS (which stays SQLAlchemy-free). get_record dispatches on these
+# kinds and get_record_kinds declares them; a test pins the keys to KINDS.
+RECORD_KEY_COLUMNS: dict[str, Any] = {
+    "bookmark": Bookmark.unique_id,
+    "marginalia": Marginalia.id,
+    "history-url": HistoryUrl.unique_id,
+    "visit": HistoryVisit.unique_id,
+}
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -135,7 +147,9 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         ro_uri = f"file:{db_path}?mode=ro"
 
         if kind == "bookmark":
-            bm = db.get_by_unique_id(id)
+            # Soft-deleted bookmarks stay resolvable: trails and marginalia
+            # referencing them must not break on archive (workspace C1).
+            bm = db.get_by_unique_id(id, include_archived=True)
             if bm is None:
                 raise ValueError(
                     f"bookmark with unique_id={id!r} not found"
@@ -153,6 +167,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 "added": bm.added.isoformat() if bm.added else None,
                 "last_visited": bm.last_visited.isoformat() if bm.last_visited else None,
                 "visit_count": bm.visit_count,
+                "archived_at": bm.archived_at.isoformat() if bm.archived_at else None,
                 "tags": [t.name for t in bm.tags],
                 "marginalia": [
                     {
@@ -272,10 +287,28 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 ),
             }
 
+        aliases = ", ".join(f"{a!r} for {k!r}" for a, k in _LEGACY_KIND_ALIASES.items())
         raise ValueError(
-            f"Unknown record kind {kind!r}. Supported: 'bookmark', "
-            "'marginalia' (alias 'annotation'), 'history-url', 'visit'."
+            f"Unknown record kind {kind!r}. Supported: {sorted(KINDS)} "
+            f"(legacy aliases: {aliases})."
         )
+
+    # ------------------------------------------------------------------
+    # get_record_kinds
+    # ------------------------------------------------------------------
+
+    def get_record_kinds() -> dict:
+        """The record kinds get_record resolves, with tables and id columns."""
+        return {
+            "kinds": [
+                {
+                    "kind": kind,
+                    "table": column.class_.__tablename__,
+                    "id_column": column.property.columns[0].name,
+                }
+                for kind, column in RECORD_KEY_COLUMNS.items()
+            ]
+        }
 
     # ------------------------------------------------------------------
     # mutate
@@ -327,6 +360,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         "get_schema": get_schema,
         "execute_sql": execute_sql,
         "get_record": get_record,
+        "get_record_kinds": get_record_kinds,
         "mutate": mutate,
     }
 
@@ -507,6 +541,13 @@ def create_server(db_path: Optional[str] = None):
             None, lambda: tools["get_record"](kind, id)
         )
         return json.dumps(result, default=str)
+
+    @mcp.tool(annotations={"readOnlyHint": True})
+    async def get_record_kinds() -> dict:
+        """Declare the URI kinds this archive resolves
+        (bookmark-memex://<kind>/<id>) and the table and id column backing
+        each. Part of the *-memex archive contract."""
+        return tools["get_record_kinds"]()
 
     # ------------------------------------------------------------------
     # Write tools
