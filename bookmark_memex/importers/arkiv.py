@@ -43,16 +43,14 @@ a future stricter-add mode.
 """
 from __future__ import annotations
 
-import gzip
-import io
-import json
-import tarfile
-import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Optional
+
+from arkiv import iter_jsonl, peek_jsonl
 
 from bookmark_memex.db import Database
+from bookmark_memex.exporters.arkiv import MEMBER
 
 
 def _parse_iso(value: Any) -> Optional[datetime]:
@@ -79,22 +77,6 @@ def _parse_iso(value: Any) -> Optional[datetime]:
 # ---------------------------------------------------------------------------
 # Detection
 # ---------------------------------------------------------------------------
-
-
-def _jsonl_peek_first_record(reader) -> Optional[Dict[str, Any]]:
-    """Return the first parsed JSONL record, or None if unparseable/empty."""
-    try:
-        for line in reader:
-            if isinstance(line, bytes):
-                line = line.decode("utf-8")
-            line = line.strip()
-            if not line:
-                continue
-            rec = json.loads(line)
-            return rec if isinstance(rec, dict) else None
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return None
-    return None
 
 
 _MARGINALIA_KINDS = ("marginalia", "annotation")  # annotation = legacy alias
@@ -132,116 +114,10 @@ def _is_bookmark_memex_arkiv_record(rec: Dict[str, Any]) -> bool:
 
 def detect(path: str | Path) -> bool:
     """Return True if *path* looks like an arkiv bundle we can read."""
-    p = Path(path)
-    if not p.exists():
+    if not Path(path).exists():
         return False
-
-    if p.is_dir():
-        jsonl = p / "records.jsonl"
-        if not jsonl.is_file():
-            return False
-        with open(jsonl, "r", encoding="utf-8") as f:
-            rec = _jsonl_peek_first_record(f)
-        return rec is not None and _is_bookmark_memex_arkiv_record(rec)
-
-    lower = str(p).lower()
-
-    if lower.endswith(".zip"):
-        try:
-            with zipfile.ZipFile(p) as zf:
-                names = set(zf.namelist())
-                if "records.jsonl" not in names:
-                    return False
-                with zf.open("records.jsonl") as f:
-                    rec = _jsonl_peek_first_record(f)
-            return rec is not None and _is_bookmark_memex_arkiv_record(rec)
-        except (zipfile.BadZipFile, KeyError):
-            return False
-
-    if lower.endswith(".tar.gz") or lower.endswith(".tgz"):
-        try:
-            with tarfile.open(p, "r:gz") as tf:
-                try:
-                    member = tf.getmember("records.jsonl")
-                except KeyError:
-                    return False
-                extracted = tf.extractfile(member)
-                if extracted is None:
-                    return False
-                rec = _jsonl_peek_first_record(extracted)
-            return rec is not None and _is_bookmark_memex_arkiv_record(rec)
-        except tarfile.TarError:
-            return False
-
-    if lower.endswith(".jsonl.gz"):
-        try:
-            with gzip.open(p, "rt", encoding="utf-8") as f:
-                rec = _jsonl_peek_first_record(f)
-            return rec is not None and _is_bookmark_memex_arkiv_record(rec)
-        except (OSError, gzip.BadGzipFile):
-            return False
-
-    if lower.endswith(".jsonl"):
-        try:
-            with open(p, "r", encoding="utf-8") as f:
-                rec = _jsonl_peek_first_record(f)
-            return rec is not None and _is_bookmark_memex_arkiv_record(rec)
-        except OSError:
-            return False
-
-    return False
-
-
-# ---------------------------------------------------------------------------
-# Bundle reading
-# ---------------------------------------------------------------------------
-
-
-def _open_jsonl(path: str | Path) -> Iterable[Dict[str, Any]]:
-    """Yield records from the records.jsonl inside a bundle, whatever its shape."""
-    p = Path(path)
-    if p.is_dir():
-        with open(p / "records.jsonl", "r", encoding="utf-8") as f:
-            yield from _parse_jsonl_lines(f)
-        return
-
-    lower = str(p).lower()
-    if lower.endswith(".zip"):
-        with zipfile.ZipFile(p) as zf:
-            with zf.open("records.jsonl") as f:
-                text = io.TextIOWrapper(f, encoding="utf-8")
-                yield from _parse_jsonl_lines(text)
-        return
-    if lower.endswith(".tar.gz") or lower.endswith(".tgz"):
-        with tarfile.open(p, "r:gz") as tf:
-            member = tf.getmember("records.jsonl")
-            extracted = tf.extractfile(member)
-            if extracted is None:
-                return
-            text = io.TextIOWrapper(extracted, encoding="utf-8")
-            yield from _parse_jsonl_lines(text)
-        return
-    if lower.endswith(".jsonl.gz"):
-        with gzip.open(p, "rt", encoding="utf-8") as f:
-            yield from _parse_jsonl_lines(f)
-        return
-    if lower.endswith(".jsonl"):
-        with open(p, "r", encoding="utf-8") as f:
-            yield from _parse_jsonl_lines(f)
-        return
-    raise ValueError(f"unrecognized arkiv bundle: {path!r}")
-
-
-def _parse_jsonl_lines(reader) -> Iterable[Dict[str, Any]]:
-    for line in reader:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            yield json.loads(line)
-        except json.JSONDecodeError:
-            # Tolerate individual bad lines rather than failing the whole import.
-            continue
+    rec = peek_jsonl(path, MEMBER)
+    return rec is not None and _is_bookmark_memex_arkiv_record(rec)
 
 
 # ---------------------------------------------------------------------------
@@ -360,7 +236,7 @@ def import_arkiv(
     # Multi-pass: bookmarks and history-urls first (so dependent visits
     # and marginalia can find their parents), then visits (so visit
     # marginalia can find their parents too), then marginalia.
-    records = list(_open_jsonl(path))
+    records = list(iter_jsonl(path, MEMBER))
 
     # Pass 1: bookmarks
     for rec in records:

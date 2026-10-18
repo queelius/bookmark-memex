@@ -21,16 +21,12 @@ still opens in 2050.
 from __future__ import annotations
 
 import io
-import json
-import os
-import tarfile
-import tempfile
-import zipfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+from arkiv import bundle_format, records_to_jsonl, write_bundle
 from sqlalchemy import select
 
 from bookmark_memex.models import Bookmark, HistoryUrl, HistoryVisit, Marginalia
@@ -40,6 +36,9 @@ from bookmark_memex.uri import (
     build_marginalia_uri,
     build_visit_uri,
 )
+
+#: The bundle member holding the records (read back by the arkiv importer).
+MEMBER = "records.jsonl"
 
 
 # ---------------------------------------------------------------------------
@@ -152,24 +151,6 @@ SCHEMA: dict = {
         },
     },
 }
-
-
-# ---------------------------------------------------------------------------
-# Bundle format detection
-# ---------------------------------------------------------------------------
-
-
-def _detect_compression(path: str) -> str:
-    """Infer output format from *path*'s extension.
-
-    Returns one of ``"zip"``, ``"tar.gz"``, ``"dir"``.
-    """
-    lower = str(path).lower()
-    if lower.endswith(".zip"):
-        return "zip"
-    if lower.endswith(".tar.gz") or lower.endswith(".tgz"):
-        return "tar.gz"
-    return "dir"
 
 
 # ---------------------------------------------------------------------------
@@ -357,13 +338,6 @@ def _build_records(
 # ---------------------------------------------------------------------------
 
 
-def _records_to_jsonl_bytes(records: List[Dict[str, Any]]) -> bytes:
-    buf = io.StringIO()
-    for rec in records:
-        buf.write(json.dumps(rec, ensure_ascii=False) + "\n")
-    return buf.getvalue().encode("utf-8")
-
-
 def _schema_yaml_bytes(records: List[Dict[str, Any]]) -> bytes:
     """Render schema.yaml with declared field docs + live per-kind counts.
 
@@ -503,32 +477,6 @@ def _readme_bytes(
     return "\n".join(lines).encode("utf-8")
 
 
-def _write_file(path: str, data: bytes) -> None:
-    with open(path, "wb") as f:
-        f.write(data)
-
-
-def _write_zip(path: str, jsonl: bytes, schema_yaml: bytes, readme: bytes) -> None:
-    """Write the three bundle files into a single .zip archive."""
-    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("records.jsonl", jsonl)
-        zf.writestr("schema.yaml", schema_yaml)
-        zf.writestr("README.md", readme)
-
-
-def _write_tar_gz(path: str, jsonl: bytes, schema_yaml: bytes, readme: bytes) -> None:
-    """Write the three bundle files into a single .tar.gz archive."""
-    with tarfile.open(path, "w:gz") as tf:
-        for name, data in (
-            ("records.jsonl", jsonl),
-            ("schema.yaml", schema_yaml),
-            ("README.md", readme),
-        ):
-            info = tarfile.TarInfo(name=name)
-            info.size = len(data)
-            tf.addfile(info, io.BytesIO(data))
-
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -583,28 +531,17 @@ def export_arkiv(
         if kind in counts:
             counts[kind] += 1
 
-    jsonl_bytes = _records_to_jsonl_bytes(records)
-    schema_bytes = _schema_yaml_bytes(records)
-    readme_bytes = _readme_bytes(
-        counts["bookmark"],
-        counts["marginalia"],
-        counts["history-url"],
-        counts["visit"],
-    )
-
-    fmt = _detect_compression(out_path_str)
-    if fmt == "zip":
-        Path(out_path_str).parent.mkdir(parents=True, exist_ok=True)
-        _write_zip(out_path_str, jsonl_bytes, schema_bytes, readme_bytes)
-    elif fmt == "tar.gz":
-        Path(out_path_str).parent.mkdir(parents=True, exist_ok=True)
-        _write_tar_gz(out_path_str, jsonl_bytes, schema_bytes, readme_bytes)
-    else:
-        out_dir = Path(out_path_str)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        _write_file(str(out_dir / "records.jsonl"), jsonl_bytes)
-        _write_file(str(out_dir / "schema.yaml"), schema_bytes)
-        _write_file(str(out_dir / "README.md"), readme_bytes)
+    fmt = bundle_format(out_path_str)
+    write_bundle(out_path_str, {
+        MEMBER: records_to_jsonl(records),
+        "schema.yaml": _schema_yaml_bytes(records),
+        "README.md": _readme_bytes(
+            counts["bookmark"],
+            counts["marginalia"],
+            counts["history-url"],
+            counts["visit"],
+        ),
+    })
 
     # Mirror marginalia count as "annotation" for any caller still reading
     # the pre-rename shape. Drop zero-count history keys so the caller
@@ -619,7 +556,7 @@ def export_arkiv(
         "records_path": (
             out_path_str
             if fmt != "dir"
-            else str(Path(out_path_str) / "records.jsonl")
+            else str(Path(out_path_str) / MEMBER)
         ),
         "schema_path": (
             out_path_str

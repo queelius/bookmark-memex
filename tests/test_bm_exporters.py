@@ -442,12 +442,52 @@ def test_arkiv_bundle_counts_match_directory(db, tmp_path):
     assert r_dir["counts"] == r_zip["counts"] == r_tar["counts"]
 
 
-def test_arkiv_detect_compression():
-    from bookmark_memex.exporters.arkiv import _detect_compression
+@pytest.mark.parametrize(
+    "name, fmt",
+    [
+        ("out", "dir"),
+        ("out.zip", "zip"),
+        ("foo.tar.gz", "tar.gz"),
+        ("foo.TAR.GZ", "tar.gz"),
+        ("foo.tgz", "tar.gz"),
+        ("foo.TGZ", "tar.gz"),
+    ],
+)
+def test_arkiv_format_inferred_from_extension(db, tmp_path, name, fmt):
+    """The bundle format (and the reported ``format``) follows the extension,
+    case-insensitively, with any other path written as a directory."""
+    out = tmp_path / name
+    result = export_arkiv(db, out)
+    assert result["format"] == fmt
+    assert out.is_dir() == (fmt == "dir")
 
-    assert _detect_compression("out") == "dir"
-    assert _detect_compression("/tmp/out.zip") == "zip"
-    assert _detect_compression("foo.tar.gz") == "tar.gz"
-    assert _detect_compression("foo.TAR.GZ") == "tar.gz"
-    assert _detect_compression("foo.tgz") == "tar.gz"
-    assert _detect_compression("foo.TGZ") == "tar.gz"
+
+@pytest.mark.parametrize("ext", ["tar.gz", "zip"])
+def test_arkiv_bundle_exports_are_byte_identical(db, tmp_path, monkeypatch, ext):
+    """Two exports of the same records yield identical bundle bytes.
+
+    schema.yaml stamps ``exported_at`` and README.md the export date, so the
+    clock is frozen; everything else (member order, timestamps, modes) must
+    be fixed by the bundle writer itself.
+    """
+    import bookmark_memex.exporters.arkiv as arkiv_mod
+    from datetime import date, datetime, timezone
+
+    class _FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+
+    class _FrozenDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 1, 2)
+
+    monkeypatch.setattr(arkiv_mod, "datetime", _FrozenDatetime)
+    monkeypatch.setattr(arkiv_mod, "date", _FrozenDate)
+
+    out1 = tmp_path / f"a.{ext}"
+    out2 = tmp_path / f"b.{ext}"
+    export_arkiv(db, out1)
+    export_arkiv(db, out2)
+    assert out1.read_bytes() == out2.read_bytes()

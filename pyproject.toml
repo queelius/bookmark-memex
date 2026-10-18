@@ -13,6 +13,8 @@ authors = [
     {name = "Alex Towell", email = "lex@metafunctor.com"}
 ]
 dependencies = [
+    # Bundle I/O (write_bundle / iter_jsonl) for the arkiv exporter and importer.
+    "arkiv>=0.4",
     "sqlalchemy>=2.0",
     "beautifulsoup4",
     "requests",

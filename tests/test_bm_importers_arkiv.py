@@ -189,6 +189,25 @@ def test_import_tar_gz_bundle(src_db, fresh_db, tmp_path):
     assert stats["bookmarks_added"] == 2
 
 
+
+@pytest.mark.parametrize("ext", ["zip", "tar.gz"])
+def test_import_bundle_missing_records_member_raises(fresh_db, tmp_path, ext):
+    """A packed bundle without records.jsonl is an error, as it is for a
+    directory bundle, not a silent empty import (and detect() says no)."""
+    out = tmp_path / f"bundle.{ext}"
+    readme = b"no records here\n"
+    if ext == "zip":
+        with zipfile.ZipFile(out, "w") as zf:
+            zf.writestr("README.md", readme)
+    else:
+        with tarfile.open(out, "w:gz") as tf:
+            info = tarfile.TarInfo("README.md")
+            info.size = len(readme)
+            tf.addfile(info, io.BytesIO(readme))
+    assert detect(out) is False
+    with pytest.raises(FileNotFoundError):
+        import_arkiv(fresh_db, out)
+
 def test_roundtrip_preserves_added_and_visit_count(tmp_path):
     """BM-5: a restore must not reset 'added' to the import date or zero out
     visit history; those values are in the bundle and must round-trip."""
