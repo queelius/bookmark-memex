@@ -1,35 +1,27 @@
 name: Scheduled Tests
 
+# Weekly run against the newest releases of every dependency, so an upstream
+# break (fastmcp, sqlalchemy, arkiv, ...) surfaces before the next push does.
 on:
   schedule:
-    # Run every Monday at 9 AM UTC
-    - cron: '0 9 * * 1'
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '0 9 * * 1'  # Mondays 09:00 UTC
+  workflow_dispatch:
 
 jobs:
-  test-dependencies:
+  latest-dependencies:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-    
-    - name: Install latest dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # Install with latest versions (not pinned)
-        pip install -e . --upgrade
-        pip install pytest pytest-cov flake8 black mypy --upgrade
-    
-    - name: Run tests
-      run: |
-        pytest -v
-    
-    - name: Check for security vulnerabilities
-      run: |
-        pip install safety
-        safety check || true  # Don't fail the build, just report
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install latest dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade --upgrade-strategy eager -e ".[dev,mcp]"
+
+      - name: Run tests
+        run: python -m pytest -v --tb=short

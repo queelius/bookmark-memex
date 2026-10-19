@@ -12,8 +12,8 @@ help:
 	@echo "  make install-dev   - Install with dev dependencies"
 	@echo "  make test          - Run all tests"
 	@echo "  make test-coverage - Run tests with coverage"
-	@echo "  make lint          - Run flake8"
-	@echo "  make format        - Format with black"
+	@echo "  make lint          - Run ruff (lint + format check)"
+	@echo "  make format        - Format with ruff"
 	@echo "  make typecheck     - Run mypy"
 	@echo "  make check         - All quality checks"
 	@echo "  make clean         - Clean build artifacts"
@@ -31,10 +31,11 @@ test-coverage: install-dev
 	$(PYTEST) --cov=bookmark_memex --cov-report=term-missing
 
 lint: install-dev
-	$(VENV)/bin/flake8 bookmark_memex tests --max-line-length 120
+	$(VENV)/bin/ruff check .
+	$(VENV)/bin/ruff format --check .
 
 format: install-dev
-	$(VENV)/bin/black bookmark_memex tests
+	$(VENV)/bin/ruff format .
 
 typecheck: install-dev
 	$(VENV)/bin/mypy bookmark_memex

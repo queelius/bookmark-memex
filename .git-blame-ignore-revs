@@ -1,0 +1,3 @@
+# Mechanical reformats. Use with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+# style: adopt ruff format at 88 columns
+75cfa643595546592f024e0a0715997fe2729d70

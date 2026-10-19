@@ -32,8 +32,8 @@ make help           # Show all commands
 make install-dev    # Install with dev deps (creates .venv/)
 make test           # Run all tests
 make test-coverage  # Tests with coverage report
-make lint           # flake8
-make format         # black (line-length 120)
+make lint           # ruff check + ruff format --check (CI runs the same)
+make format         # ruff format (line-length 88)
 make typecheck      # mypy
 make check          # lint + typecheck
 make clean          # remove build artifacts
