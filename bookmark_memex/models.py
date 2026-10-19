@@ -9,6 +9,7 @@ Key design decisions:
 - bookmark_tags junction cascades DELETE on both FK sides.
 - Bookmark.tags loaded with ``lazy="selectin"`` for efficient retrieval.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -104,14 +105,16 @@ class Bookmark(Base):
         String(16), nullable=False, default="bookmark", index=True
     )
 
-    added: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=_utcnow
-    )
+    added: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
     last_visited: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     visit_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    starred: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    starred: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+    pinned: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
     reachable: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
     last_checked: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -152,9 +155,7 @@ class Bookmark(Base):
         # No cascade delete — marginalia survive via ON DELETE SET NULL.
     )
 
-    __table_args__ = (
-        Index("ix_bookmarks_added_desc", "added"),
-    )
+    __table_args__ = (Index("ix_bookmarks_added_desc", "added"),)
 
     # ------------------------------------------------------------------
     # Hybrid properties
@@ -187,7 +188,9 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(256), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(
+        String(256), unique=True, nullable=False, index=True
+    )
     color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
 
     bookmarks: Mapped[List["Bookmark"]] = relationship(
@@ -434,9 +437,7 @@ class HistoryUrl(Base):
         foreign_keys="Marginalia.history_url_id",
     )
 
-    __table_args__ = (
-        Index("ix_history_urls_visit_count_desc", "visit_count"),
-    )
+    __table_args__ = (Index("ix_history_urls_visit_count_desc", "visit_count"),)
 
     @hybrid_property
     def uri(self) -> str:

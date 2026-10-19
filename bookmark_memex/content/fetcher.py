@@ -20,9 +20,7 @@ from bookmark_memex.content.extractor import (
     html_to_markdown,
 )
 
-_DEFAULT_USER_AGENT = (
-    "Mozilla/5.0 (compatible; bookmark-memex/1.0; +https://github.com/queelius/bookmark-memex)"
-)
+_DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; bookmark-memex/1.0; +https://github.com/queelius/bookmark-memex)"
 
 
 class ContentFetcher:

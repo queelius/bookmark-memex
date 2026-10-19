@@ -236,12 +236,12 @@ Follows the `ImportResult` pattern already established for bookmarks:
 
 ```python
 class HistoryImportResult(NamedTuple):
-    urls_seen:       int   # raw URL rows processed
-    urls_added:      int   # new history_urls created
-    urls_updated:    int   # existing history_urls whose aggregates moved
-    visits_seen:     int   # raw visit rows processed
-    visits_added:    int   # new history_visits inserted
-    visits_skipped:  int   # dedup hits (INSERT OR IGNORE)
+    urls_seen: int  # raw URL rows processed
+    urls_added: int  # new history_urls created
+    urls_updated: int  # existing history_urls whose aggregates moved
+    visits_seen: int  # raw visit rows processed
+    visits_added: int  # new history_visits inserted
+    visits_skipped: int  # dedup hits (INSERT OR IGNORE)
 ```
 
 CLI prints all six.

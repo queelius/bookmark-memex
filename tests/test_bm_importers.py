@@ -1,4 +1,5 @@
 """Tests for bookmark_memex.importers file importers."""
+
 from __future__ import annotations
 
 import json
@@ -34,6 +35,7 @@ def test_import_html_count(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 2
 
@@ -50,6 +52,7 @@ def test_import_html_urls_in_db(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers import import_file
+
     import_file(db, f)
 
     urls = {bm.url for bm in db.list()}
@@ -64,6 +67,7 @@ def test_import_html_tags_attribute(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers.file_importers import import_html
+
     import_html(db, f)
 
     bm = db.list()[0]
@@ -86,6 +90,7 @@ def test_import_html_folder_as_tag(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers.file_importers import import_html
+
     import_html(db, f)
 
     bm = db.list()[0]
@@ -106,6 +111,7 @@ def test_import_html_skips_non_http(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers.file_importers import import_html
+
     count = import_html(db, f)
 
     assert count == 1
@@ -119,6 +125,7 @@ def test_import_html_source_type(db, tmp_path):
     f.write_text(html)
 
     from bookmark_memex.importers.file_importers import import_html
+
     import_html(db, f)
 
     bm = db.list()[0]
@@ -140,6 +147,7 @@ def test_import_json_count(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 2
 
@@ -154,6 +162,7 @@ def test_import_json_urls_in_db(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers import import_file
+
     import_file(db, f)
 
     urls = {bm.url for bm in db.list()}
@@ -168,6 +177,7 @@ def test_import_json_tags_as_list(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers.file_importers import import_json
+
     import_json(db, f)
 
     bm = db.list()[0]
@@ -182,6 +192,7 @@ def test_import_json_tags_as_comma_string(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers.file_importers import import_json
+
     import_json(db, f)
 
     bm = db.list()[0]
@@ -196,6 +207,7 @@ def test_import_json_starred_flag(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers.file_importers import import_json
+
     import_json(db, f)
 
     assert db.list()[0].starred is True
@@ -208,6 +220,7 @@ def test_import_json_description(db, tmp_path):
     f.write_text(json.dumps(data))
 
     from bookmark_memex.importers.file_importers import import_json
+
     import_json(db, f)
 
     assert db.list()[0].description == "hello"
@@ -225,6 +238,7 @@ def test_import_csv_count(db, tmp_path):
     f.write_text(csv_content)
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -236,6 +250,7 @@ def test_import_csv_url_in_db(db, tmp_path):
     f.write_text(csv_content)
 
     from bookmark_memex.importers import import_file
+
     import_file(db, f)
 
     urls = {bm.url for bm in db.list()}
@@ -244,11 +259,12 @@ def test_import_csv_url_in_db(db, tmp_path):
 
 def test_import_csv_tags_parsed(db, tmp_path):
     """Comma-separated tags in CSV are split correctly."""
-    csv_content = "url,tags\nhttps://example.com/,\"foo,bar\"\n"
+    csv_content = 'url,tags\nhttps://example.com/,"foo,bar"\n'
     f = tmp_path / "bookmarks.csv"
     f.write_text(csv_content)
 
     from bookmark_memex.importers.file_importers import import_csv
+
     import_csv(db, f)
 
     bm = db.list()[0]
@@ -263,6 +279,7 @@ def test_import_csv_description(db, tmp_path):
     f.write_text(csv_content)
 
     from bookmark_memex.importers.file_importers import import_csv
+
     import_csv(db, f)
 
     assert db.list()[0].description == "my desc"
@@ -280,6 +297,7 @@ def test_import_text_count(db, tmp_path):
     f.write_text(text)
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 2
 
@@ -291,6 +309,7 @@ def test_import_text_urls_in_db(db, tmp_path):
     f.write_text(text)
 
     from bookmark_memex.importers.file_importers import import_text
+
     count = import_text(db, f)
 
     assert count == 2
@@ -306,6 +325,7 @@ def test_import_text_skips_blank_and_comments(db, tmp_path):
     f.write_text(text)
 
     from bookmark_memex.importers.file_importers import import_text
+
     count = import_text(db, f)
     assert count == 1
 
@@ -322,6 +342,7 @@ def test_import_markdown_links(db, tmp_path):
     f.write_text(md)
 
     from bookmark_memex.importers.file_importers import import_markdown
+
     count = import_markdown(db, f)
     assert count == 2
 
@@ -337,6 +358,7 @@ def test_import_markdown_link_title(db, tmp_path):
     f.write_text(md)
 
     from bookmark_memex.importers.file_importers import import_markdown
+
     import_markdown(db, f)
 
     bm = db.list()[0]
@@ -350,6 +372,7 @@ def test_import_markdown_skips_non_http(db, tmp_path):
     f.write_text(md)
 
     from bookmark_memex.importers.file_importers import import_markdown
+
     count = import_markdown(db, f)
     assert count == 1
 
@@ -365,6 +388,7 @@ def test_autodetect_html_extension(db, tmp_path):
     f.write_text('<DL><p><DT><A HREF="https://example.com/">X</A></DL>')
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -375,6 +399,7 @@ def test_autodetect_htm_extension(db, tmp_path):
     f.write_text('<DL><p><DT><A HREF="https://example.com/">X</A></DL>')
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -385,6 +410,7 @@ def test_autodetect_json_extension(db, tmp_path):
     f.write_text('[{"url": "https://example.com/"}]')
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -395,6 +421,7 @@ def test_autodetect_csv_extension(db, tmp_path):
     f.write_text("url\nhttps://example.com/\n")
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -405,6 +432,7 @@ def test_autodetect_md_extension(db, tmp_path):
     f.write_text("[Example](https://example.com/)\n")
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 1
 
@@ -415,6 +443,7 @@ def test_autodetect_txt_extension(db, tmp_path):
     f.write_text("https://example.com/\nhttps://python.org/\n")
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f)
     assert count == 2
 
@@ -425,6 +454,7 @@ def test_explicit_format_overrides_extension(db, tmp_path):
     f.write_text("https://example.com/\n")
 
     from bookmark_memex.importers import import_file
+
     count = import_file(db, f, format="text")
     assert count == 1
 
@@ -435,5 +465,6 @@ def test_unknown_format_raises(db, tmp_path):
     f.write_text("")
 
     from bookmark_memex.importers import import_file
+
     with pytest.raises(ValueError, match="Unknown format"):
         import_file(db, f, format="xyz")

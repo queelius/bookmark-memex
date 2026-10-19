@@ -3,6 +3,7 @@
 Tests cover JSON, CSV, text, markdown, m3u formats, the arkiv exporter,
 and the export_file dispatcher.
 """
+
 from __future__ import annotations
 
 import csv
@@ -80,7 +81,17 @@ def test_json_dict_keys(db, tmp_path):
     data = json.loads(out.read_text())
     assert len(data) > 0
     record = data[0]
-    for key in ("url", "title", "description", "tags", "starred", "pinned", "added", "visit_count", "unique_id"):
+    for key in (
+        "url",
+        "title",
+        "description",
+        "tags",
+        "starred",
+        "pinned",
+        "added",
+        "visit_count",
+        "unique_id",
+    ):
         assert key in record, f"Missing key: {key}"
 
 
@@ -296,7 +307,11 @@ def test_arkiv_records_have_uris(db, tmp_path):
     out = tmp_path / "arkiv"
     export_arkiv(db, out)
     records_path = out / "records.jsonl"
-    records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
+    records = [
+        json.loads(line)
+        for line in records_path.read_text().splitlines()
+        if line.strip()
+    ]
     for r in records:
         assert "uri" in r
         assert r["uri"].startswith("bookmark-memex://")
@@ -306,7 +321,11 @@ def test_arkiv_records_kinds(db, tmp_path):
     out = tmp_path / "arkiv"
     export_arkiv(db, out)
     records_path = out / "records.jsonl"
-    records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
+    records = [
+        json.loads(line)
+        for line in records_path.read_text().splitlines()
+        if line.strip()
+    ]
     kinds = {r["kind"] for r in records}
     assert "bookmark" in kinds
     assert "marginalia" in kinds
@@ -316,7 +335,11 @@ def test_arkiv_bookmark_record_fields(db, tmp_path):
     out = tmp_path / "arkiv"
     export_arkiv(db, out)
     records_path = out / "records.jsonl"
-    records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
+    records = [
+        json.loads(line)
+        for line in records_path.read_text().splitlines()
+        if line.strip()
+    ]
     bm_records = [r for r in records if r["kind"] == "bookmark"]
     assert len(bm_records) == 2
     for r in bm_records:
@@ -328,7 +351,11 @@ def test_arkiv_marginalia_has_bookmark_uri(db, tmp_path):
     out = tmp_path / "arkiv"
     export_arkiv(db, out)
     records_path = out / "records.jsonl"
-    records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
+    records = [
+        json.loads(line)
+        for line in records_path.read_text().splitlines()
+        if line.strip()
+    ]
     m_records = [r for r in records if r["kind"] == "marginalia"]
     assert len(m_records) == 1
     m = m_records[0]
@@ -396,7 +423,11 @@ def test_arkiv_zip_bundle(db, tmp_path):
         assert {"records.jsonl", "schema.yaml", "README.md"}.issubset(names)
         # Records are valid JSONL inside the zip.
         with zf.open("records.jsonl") as f:
-            lines = [json.loads(ln) for ln in f.read().decode("utf-8").splitlines() if ln.strip()]
+            lines = [
+                json.loads(ln)
+                for ln in f.read().decode("utf-8").splitlines()
+                if ln.strip()
+            ]
     kinds = {r["kind"] for r in lines}
     assert "bookmark" in kinds
     assert result["counts"]["bookmark"] == 2
@@ -414,7 +445,11 @@ def test_arkiv_tar_gz_bundle(db, tmp_path):
         assert {"records.jsonl", "schema.yaml", "README.md"}.issubset(names)
         extracted = tf.extractfile("records.jsonl")
         assert extracted is not None
-        lines = [json.loads(ln) for ln in extracted.read().decode("utf-8").splitlines() if ln.strip()]
+        lines = [
+            json.loads(ln)
+            for ln in extracted.read().decode("utf-8").splitlines()
+            if ln.strip()
+        ]
     assert any(r["kind"] == "marginalia" for r in lines)
 
 

@@ -2,6 +2,7 @@
 
 Uses an in-memory SQLite database — no external state needed.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -303,7 +304,9 @@ class TestMarginalia:
         ).scalar_one_or_none()
 
         assert result is not None, "Marginalia must survive bookmark deletion"
-        assert result.bookmark_id is None, "bookmark_id should be NULL after parent delete"
+        assert result.bookmark_id is None, (
+            "bookmark_id should be NULL after parent delete"
+        )
 
 
 # ---------------------------------------------------------------------------

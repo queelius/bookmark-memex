@@ -9,6 +9,7 @@ Provides two public functions:
 The lower-level ChromeImporter and FirefoxImporter classes are also public
 so they can be tested directly against fake filesystem fixtures.
 """
+
 from __future__ import annotations
 
 import json
@@ -321,11 +322,7 @@ class FirefoxImporter(BrowserImporter):
             for title, url, date_added, last_modified, folders in rows:
                 if not url:
                     continue
-                folder_path = (
-                    folders
-                    if folders and folders not in _skip
-                    else None
-                )
+                folder_path = folders if folders and folders not in _skip else None
                 tags: list[str] = []
                 if folder_path:
                     tags.append(f"firefox/{folder_path}")
@@ -396,14 +393,11 @@ def import_browser_bookmarks(
     if profile is None:
         chosen = next((p for p in profiles if p.is_default), profiles[0])
     else:
-        chosen = next(
-            (p for p in profiles if p.name.lower() == profile.lower()), None
-        )
+        chosen = next((p for p in profiles if p.name.lower() == profile.lower()), None)
         if chosen is None:
             available = ", ".join(p.name for p in profiles)
             raise ValueError(
-                f"Profile {profile!r} not found for {browser}. "
-                f"Available: {available}"
+                f"Profile {profile!r} not found for {browser}. Available: {available}"
             )
 
     raw = importer.import_bookmarks(chosen.path)

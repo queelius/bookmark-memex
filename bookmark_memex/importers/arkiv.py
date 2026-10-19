@@ -41,6 +41,7 @@ flag is effectively a no-op here. We accept it for CLI parity with
 the rest of the ``*-memex`` ecosystem and to reserve the semantic for
 a future stricter-add mode.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

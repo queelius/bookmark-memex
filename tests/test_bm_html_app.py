@@ -9,6 +9,7 @@ Both modes: vendored sql.js (no CDN), FTS5 shadow tables stripped,
 journal_mode=DELETE on the shipped DB, hash routing in the template,
 no default API endpoint.
 """
+
 from __future__ import annotations
 
 import base64
@@ -30,11 +31,11 @@ from bookmark_memex.exporters.html_app import (
 
 # Tables that must NEVER ship inside a published bundle.
 _SENSITIVE_TABLES = (
-    "events",          # audit log / activity pattern
+    "events",  # audit log / activity pattern
     "bookmark_sources",  # import provenance, raw_data
-    "history_urls",    # browser history
+    "history_urls",  # browser history
     "history_visits",  # browser history
-    "content_cache",   # bulky cached page content
+    "content_cache",  # bulky cached page content
 )
 
 
@@ -90,7 +91,9 @@ def test_sanitize_keeps_only_the_allowlist(populated_db, tmp_path):
     assert "bookmarks" in names
     assert "marginalia" in names
     # Nothing outside the allowlist (minus sqlite_ internals) remains.
-    leaked = {n for n in names if not n.startswith("sqlite_")} - set(_EXPORT_TABLE_ALLOWLIST)
+    leaked = {n for n in names if not n.startswith("sqlite_")} - set(
+        _EXPORT_TABLE_ALLOWLIST
+    )
     assert not leaked, f"non-allowlisted tables shipped in the bundle: {leaked}"
     for fts in _FTS5_TABLES:
         assert fts not in names
@@ -140,7 +143,8 @@ def test_prepare_db_bytes_produces_valid_sqlite(populated_db, tmp_path):
     restored.write_bytes(data)
     with sqlite3.connect(str(restored)) as conn:
         names = {
-            r[0] for r in conn.execute(
+            r[0]
+            for r in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
@@ -343,7 +347,9 @@ def test_export_file_dispatcher_directory_mode(populated_db, tmp_path):
     assert (out / "sql-wasm.wasm").exists()
 
 
-def test_export_file_dispatcher_ignores_single_file_for_other_formats(populated_db, tmp_path):
+def test_export_file_dispatcher_ignores_single_file_for_other_formats(
+    populated_db, tmp_path
+):
     """single_file kwarg from the CLI must not reach other exporters."""
     from bookmark_memex.exporters import export_file
 

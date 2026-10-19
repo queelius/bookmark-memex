@@ -25,7 +25,7 @@ def sample_bookmarks():
             "description": "Official Python documentation",
             "favicon": "favicons/python.ico",
             "last_visited": "2025-01-19T06:14:54.355523+00:00",
-            "reachable": True
+            "reachable": True,
         },
         {
             "id": 2,
@@ -39,7 +39,7 @@ def sample_bookmarks():
             "description": "Code hosting platform",
             "favicon": "favicons/github.png",
             "last_visited": "2025-01-20T12:00:00.000000+00:00",
-            "reachable": True
+            "reachable": True,
         },
         {
             "id": 3,
@@ -53,8 +53,8 @@ def sample_bookmarks():
             "description": "",
             "favicon": "",
             "last_visited": None,
-            "reachable": False
-        }
+            "reachable": False,
+        },
     ]
 
 
@@ -72,14 +72,14 @@ def populated_lib_dir(temp_lib_dir, sample_bookmarks):
     """Create a populated library directory with sample bookmarks."""
     bookmarks_file = os.path.join(temp_lib_dir, "bookmarks.json")
     favicons_dir = os.path.join(temp_lib_dir, "favicons")
-    
+
     # Create favicons directory
     os.makedirs(favicons_dir, exist_ok=True)
-    
+
     # Save sample bookmarks
-    with open(bookmarks_file, 'w', encoding='utf-8') as f:
+    with open(bookmarks_file, "w", encoding="utf-8") as f:
         json.dump(sample_bookmarks, f, indent=2)
-    
+
     return temp_lib_dir
 
 
@@ -123,21 +123,22 @@ def sample_json_bookmarks():
             "title": "Python.org",
             "tags": ["python", "programming"],
             "description": "Official Python website",
-            "stars": True
+            "stars": True,
         },
         {
             "url": "https://github.com/",
             "title": "GitHub",
             "tags": ["git", "development"],
             "description": "Code hosting platform",
-            "stars": True
-        }
+            "stars": True,
+        },
     ]
 
 
 @pytest.fixture
 def mock_favicon_download(monkeypatch):
     """Mock favicon downloading to avoid network calls."""
+
     def mock_download(*args, **kwargs):
         return "favicons/mocked.ico"
 
@@ -157,6 +158,7 @@ def temp_db():
 
 # ============ Test Helpers ============
 
+
 @pytest.fixture
 def capture_output():
     """
@@ -167,11 +169,13 @@ def capture_output():
             output = capture_output(some_func, arg1, arg2)
             assert "expected" in output
     """
+
     def _capture(func, *args, **kwargs):
         output = StringIO()
         with redirect_stdout(output):
             func(*args, **kwargs)
         return output.getvalue()
+
     return _capture
 
 
@@ -204,6 +208,7 @@ class BookmarkBuilder:
         builder = BookmarkBuilder(db)
         builder.with_url("https://example.com").with_title("Example").starred().build()
     """
+
     def __init__(self, db):
         self.db = db
         self.url = "https://example.com"
@@ -261,7 +266,7 @@ class BookmarkBuilder:
             tags=self.tags,
             stars=self.stars,
             pinned=self.pinned,
-            archived=self.archived
+            archived=self.archived,
         )
 
 
@@ -277,12 +282,15 @@ def bookmark_builder():
             builder = bookmark_builder(db)
             builder.with_url("https://test.com").starred().build()
     """
+
     def _builder(db):
         return BookmarkBuilder(db)
+
     return _builder
 
 
 # ============ Assertion Helpers ============
+
 
 def assert_bookmark_in_list(bookmarks, url=None, title=None, tag=None):
     """
@@ -335,7 +343,9 @@ def assert_no_tag_on_bookmark(bookmark, tag_name):
         AssertionError if tag is found on bookmark
     """
     tag_names = [t.name for t in bookmark.tags]
-    assert tag_name not in tag_names, f"Expected no tag '{tag_name}' but found it in {tag_names}"
+    assert tag_name not in tag_names, (
+        f"Expected no tag '{tag_name}' but found it in {tag_names}"
+    )
 
 
 # Make assertion helpers available at module level for direct import
@@ -349,6 +359,7 @@ def bookmark_assertions():
             bookmark_assertions.in_list(bookmarks, url="https://test.com")
             bookmark_assertions.has_tag(bookmark, "python")
     """
+
     class Assertions:
         in_list = staticmethod(assert_bookmark_in_list)
         has_tag = staticmethod(assert_tag_on_bookmark)
@@ -358,6 +369,7 @@ def bookmark_assertions():
 
 
 # ============ Database Fixtures ============
+
 
 @pytest.fixture
 def empty_database():
@@ -385,47 +397,44 @@ def populated_database():
             title="Python Documentation",
             description="Official Python docs",
             tags=["programming/python", "documentation"],
-            stars=True
+            stars=True,
         )
         db.add(
             url="https://www.rust-lang.org",
             title="Rust Programming Language",
             tags=["programming/rust"],
-            stars=False
+            stars=False,
         )
         db.add(
             url="https://github.com",
             title="GitHub",
             tags=["development", "git"],
-            stars=True
+            stars=True,
         )
         db.add(
             url="https://stackoverflow.com",
             title="Stack Overflow",
             tags=["qa", "programming"],
-            stars=False
+            stars=False,
         )
         db.add(
             url="https://example.com/archived",
             title="Archived Site",
             tags=["old"],
-            archived=True
+            archived=True,
         )
-        db.add(
-            url="https://broken-site.test",
-            title="Broken Site",
-            reachable=False
-        )
+        db.add(url="https://broken-site.test", title="Broken Site", reachable=False)
         db.add(
             url="https://example.com/doc.pdf",
             title="PDF Document",
-            tags=["docs", "pdf"]
+            tags=["docs", "pdf"],
         )
 
         yield db
 
 
 # ============ bookmark-memex Fixtures ============
+
 
 @pytest.fixture
 def tmp_db_path():

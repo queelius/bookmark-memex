@@ -10,6 +10,7 @@ discover()          -> list[tuple[str, DetectFn]]
 run_detectors()     -> dict | None
 reset_cache()       -> None
 """
+
 from __future__ import annotations
 
 import importlib
@@ -84,6 +85,7 @@ def discover() -> list[tuple[str, DetectFn]]:
     user_dir = ""
     try:
         from bookmark_memex.config import get_config
+
         user_dir = get_config().detectors_dir
     except Exception:
         pass

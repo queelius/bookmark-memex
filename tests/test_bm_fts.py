@@ -117,7 +117,9 @@ def test_rebuild_bookmarks_index_progress_callback(db, fts):
     db.add("https://a.com", title="A")
     db.add("https://b.com", title="B")
     calls = []
-    fts.rebuild_bookmarks_index(progress_callback=lambda cur, tot: calls.append((cur, tot)))
+    fts.rebuild_bookmarks_index(
+        progress_callback=lambda cur, tot: calls.append((cur, tot))
+    )
     assert len(calls) == 2
     assert calls[-1] == (2, 2)
 
@@ -216,14 +218,20 @@ def test_search_rank_is_nonnegative(db, fts):
 
 def test_search_respects_limit(db, fts):
     for i in range(10):
-        db.add(f"https://example{i}.com", title=f"Example Site {i}", description="example")
+        db.add(
+            f"https://example{i}.com", title=f"Example Site {i}", description="example"
+        )
     fts.rebuild_bookmarks_index()
     results = fts.search("example", limit=3)
     assert len(results) <= 3
 
 
 def test_search_with_tags(db, fts):
-    db.add("https://arxiv.org/123", title="A Machine Learning Paper", tags=["ai", "research"])
+    db.add(
+        "https://arxiv.org/123",
+        title="A Machine Learning Paper",
+        tags=["ai", "research"],
+    )
     fts.rebuild_bookmarks_index()
     results = fts.search("machine learning")
     assert len(results) >= 1
@@ -236,10 +244,12 @@ def test_search_with_tags(db, fts):
 
 def _table_names(db_path):
     import sqlite3
+
     conn = sqlite3.connect(db_path)
     try:
         return {
-            r[0] for r in conn.execute(
+            r[0]
+            for r in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
@@ -258,14 +268,19 @@ def test_database_init_creates_fts_tables(tmp_db_path):
 
 def test_reindex_fts_populates_and_search_works(db):
     """reindex_fts() repopulates the indexes so FTS search returns matches."""
-    db.add("https://docs.python.org/3/", title="Python Documentation",
-           tags=["programming/python"])
-    db.add("https://example.com/vec", title="Vector databases compared",
-           tags=["vectors"])
+    db.add(
+        "https://docs.python.org/3/",
+        title="Python Documentation",
+        tags=["programming/python"],
+    )
+    db.add(
+        "https://example.com/vec", title="Vector databases compared", tags=["vectors"]
+    )
     counts = db.reindex_fts()
     assert counts["bookmarks"] == 2
 
     import sqlite3
+
     conn = sqlite3.connect(db.path)
     try:
         hits = conn.execute(
@@ -284,6 +299,7 @@ def test_reindex_excludes_archived_bookmarks(db):
     db.reindex_fts()
 
     import sqlite3
+
     conn = sqlite3.connect(db.path)
     try:
         titles = {

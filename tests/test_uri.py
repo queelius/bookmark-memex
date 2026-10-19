@@ -1,4 +1,5 @@
 """Unit tests for bookmark_memex.uri."""
+
 import pytest
 
 from bookmark_memex.uri import (
@@ -31,8 +32,7 @@ class TestBuilders:
 
     def test_build_marginalia_uri(self):
         assert (
-            build_marginalia_uri("uuid-val")
-            == "bookmark-memex://marginalia/uuid-val"
+            build_marginalia_uri("uuid-val") == "bookmark-memex://marginalia/uuid-val"
         )
 
     def test_build_annotation_uri_is_alias(self):
@@ -55,7 +55,9 @@ class TestBuilders:
 class TestParser:
     def test_parse_bookmark_uri(self):
         result = parse_uri("bookmark-memex://bookmark/abc123")
-        assert result == ParsedUri(scheme=SCHEME, kind="bookmark", id="abc123", fragment=None)
+        assert result == ParsedUri(
+            scheme=SCHEME, kind="bookmark", id="abc123", fragment=None
+        )
 
     def test_parse_marginalia_uri(self):
         result = parse_uri("bookmark-memex://marginalia/uuid-xyz")

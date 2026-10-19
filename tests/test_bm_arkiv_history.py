@@ -10,6 +10,7 @@ Covers the privacy contract:
   bundle.
 - CLI ``--include-history`` flag plumbs through to the exporter.
 """
+
 from __future__ import annotations
 
 import json
@@ -133,9 +134,7 @@ def _read_bundle_schema(bundle_path: Path) -> dict:
 
 
 class TestHistoryOptInDefault:
-    def test_history_absent_by_default(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_history_absent_by_default(self, tmp_db_path: str, tmp_path: Path) -> None:
         db = Database(tmp_db_path)
         db.add("https://saved.example.com/", title="Saved")
         _populate_history(db, tmp_path)
@@ -176,9 +175,7 @@ class TestHistoryOptInDefault:
 
 
 class TestRecordShapes:
-    def test_history_url_fields(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_history_url_fields(self, tmp_db_path: str, tmp_path: Path) -> None:
         db = Database(tmp_db_path)
         _populate_history(db, tmp_path)
 
@@ -259,9 +256,7 @@ class TestMarginaliaOnHistory:
                 __import__(
                     "sqlalchemy",
                     fromlist=["text"],
-                ).text(
-                    "SELECT id, unique_id FROM history_urls LIMIT 1"
-                )
+                ).text("SELECT id, unique_id FROM history_urls LIMIT 1")
             ).fetchone()
         hu_id, hu_unique_id = hu_row
 
@@ -291,9 +286,8 @@ class TestMarginaliaOnHistory:
 
         with db._session() as s:
             from sqlalchemy import text as _text
-            hu_row = s.execute(
-                _text("SELECT id FROM history_urls LIMIT 1")
-            ).fetchone()
+
+            hu_row = s.execute(_text("SELECT id FROM history_urls LIMIT 1")).fetchone()
         hu_id = hu_row[0]
 
         mid = uuid.uuid4().hex
@@ -403,9 +397,7 @@ class TestCLIExportHistoryFlag:
         assert "history-url" in kinds
         assert "visit" in kinds
 
-    def test_flag_ignored_by_html_app(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_flag_ignored_by_html_app(self, tmp_db_path: str, tmp_path: Path) -> None:
         """--include-history on an html-app export must not break things."""
         from bookmark_memex.cli import cmd_export
 

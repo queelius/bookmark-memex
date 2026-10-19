@@ -16,6 +16,7 @@ functions.  These are directly testable without starting an MCP server.
 ``create_server(db_path)`` wraps each function as an async FastMCP tool,
 running sync helpers in the default executor when needed.
 """
+
 from __future__ import annotations
 
 import json
@@ -68,17 +69,14 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         with sqlite3.connect(db_path) as conn:
             conn.row_factory = sqlite3.Row
             tables = conn.execute(
-                "SELECT name, sql FROM sqlite_master "
-                "WHERE type='table' ORDER BY name"
+                "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name"
             ).fetchall()
             parts: list[str] = []
             for row in tables:
                 name = row["name"]
                 ddl = row["sql"] or ""
                 try:
-                    count = conn.execute(
-                        f"SELECT COUNT(*) FROM [{name}]"
-                    ).fetchone()[0]
+                    count = conn.execute(f"SELECT COUNT(*) FROM [{name}]").fetchone()[0]
                 except Exception:
                     count = "?"
                 parts.append(f"-- {name} ({count} rows)\n{ddl};")
@@ -99,12 +97,14 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         """
         first_word = sql.strip().split(None, 1)[0].upper() if sql.strip() else ""
         if first_word not in _ALLOWED_KEYWORDS:
-            return json.dumps({
-                "error": (
-                    f"Statement type '{first_word}' is not allowed. "
-                    f"Only {sorted(_ALLOWED_KEYWORDS)} are permitted."
-                )
-            })
+            return json.dumps(
+                {
+                    "error": (
+                        f"Statement type '{first_word}' is not allowed. "
+                        f"Only {sorted(_ALLOWED_KEYWORDS)} are permitted."
+                    )
+                }
+            )
 
         uri = f"file:{db_path}?mode=ro"
         try:
@@ -151,9 +151,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
             # referencing them must not break on archive (workspace C1).
             bm = db.get_by_unique_id(id, include_archived=True)
             if bm is None:
-                raise ValueError(
-                    f"bookmark with unique_id={id!r} not found"
-                )
+                raise ValueError(f"bookmark with unique_id={id!r} not found")
             notes = db.list_marginalia(id)
             return {
                 "unique_id": bm.unique_id,
@@ -165,7 +163,9 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 "starred": bm.starred,
                 "pinned": bm.pinned,
                 "added": bm.added.isoformat() if bm.added else None,
-                "last_visited": bm.last_visited.isoformat() if bm.last_visited else None,
+                "last_visited": bm.last_visited.isoformat()
+                if bm.last_visited
+                else None,
                 "visit_count": bm.visit_count,
                 "archived_at": bm.archived_at.isoformat() if bm.archived_at else None,
                 "tags": [t.name for t in bm.tags],
@@ -174,8 +174,12 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                         "id": n.id,
                         "uri": n.uri,
                         "text": n.text,
-                        "created_at": n.created_at.isoformat() if n.created_at else None,
-                        "updated_at": n.updated_at.isoformat() if n.updated_at else None,
+                        "created_at": n.created_at.isoformat()
+                        if n.created_at
+                        else None,
+                        "updated_at": n.updated_at.isoformat()
+                        if n.updated_at
+                        else None,
                     }
                     for n in notes
                 ],
@@ -219,9 +223,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         if kind == "history-url":
             row = db.get_history_url_by_unique_id(id)
             if row is None:
-                raise ValueError(
-                    f"history-url with unique_id={id!r} not found"
-                )
+                raise ValueError(f"history-url with unique_id={id!r} not found")
             # Pull the 20 most recent visits inline for convenience.
             with sqlite3.connect(ro_uri, uri=True) as conn:
                 conn.row_factory = sqlite3.Row
@@ -264,9 +266,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
         if kind == "visit":
             row = db.get_history_visit_by_unique_id(id)
             if row is None:
-                raise ValueError(
-                    f"visit with unique_id={id!r} not found"
-                )
+                raise ValueError(f"visit with unique_id={id!r} not found")
             # Resolve the parent history_url for context.
             parent = db.get_history_url(row.url_id)
             return {
@@ -408,20 +408,14 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
         bm_id = _resolve_bookmark_id(
             db, unique_id=op.get("unique_id"), bid=op.get("id")
         )
-        fields = {
-            k: v
-            for k, v in op.items()
-            if k not in ("op", "id", "unique_id")
-        }
+        fields = {k: v for k, v in op.items() if k not in ("op", "id", "unique_id")}
         bm = db.update(bm_id, **fields)
         if bm is None:
             raise ValueError(f"bookmark id={bm_id} not found for update")
         return {"id": bm.id}
 
     if op_type == "delete":
-        bid = _resolve_bookmark_id(
-            db, unique_id=op.get("unique_id"), bid=op.get("id")
-        )
+        bid = _resolve_bookmark_id(db, unique_id=op.get("unique_id"), bid=op.get("id"))
         db.delete(bid, hard=op.get("hard", False))
         return {"id": bid}
 
@@ -446,9 +440,7 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
     if op_type == "update_marginalia":
         note = db.update_marginalia(op["id"], op["text"])
         if note is None:
-            raise ValueError(
-                f"marginalia id={op['id']!r} not found (or archived)"
-            )
+            raise ValueError(f"marginalia id={op['id']!r} not found (or archived)")
         return {"id": note.id, "uri": note.uri}
 
     if op_type == "delete_marginalia":
@@ -458,9 +450,7 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
 
     if op_type == "restore_marginalia":
         if not db.restore_marginalia(op["id"]):
-            raise ValueError(
-                f"marginalia id={op['id']!r} not found or already active"
-            )
+            raise ValueError(f"marginalia id={op['id']!r} not found or already active")
         return {"id": op["id"]}
 
     if op_type == "restore":
@@ -537,9 +527,7 @@ def create_server(db_path: Optional[str] = None):
               or visit id
         """
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None, lambda: tools["get_record"](kind, id)
-        )
+        result = await loop.run_in_executor(None, lambda: tools["get_record"](kind, id))
         return json.dumps(result, default=str)
 
     @mcp.tool(annotations={"readOnlyHint": True})
@@ -566,9 +554,7 @@ def create_server(db_path: Optional[str] = None):
         Returns a JSON summary: {"total": N, "succeeded": N, "results": [...]}.
         """
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None, lambda: tools["mutate"](operations)
-        )
+        result = await loop.run_in_executor(None, lambda: tools["mutate"](operations))
         return json.dumps(result, default=str)
 
     @mcp.tool()

@@ -12,6 +12,7 @@ The migration must be:
 - Safe on pre-rename DBs: data preserved, new name in place.
 - Idempotent: repeated opens do not corrupt state.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -26,9 +27,7 @@ def _table_names(db_path: Path) -> set[str]:
     with sqlite3.connect(str(db_path)) as conn:
         return {
             r[0]
-            for r in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
 
 

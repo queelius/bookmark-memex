@@ -2,6 +2,7 @@
 
 Uses MagicMock for sessions — no real database needed.
 """
+
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
@@ -39,6 +40,7 @@ class TestIsArchived:
         # Objects without the attribute at all should be treated as not archived.
         class Bare:
             pass
+
         assert is_archived(Bare()) is False
 
 

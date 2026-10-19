@@ -49,6 +49,7 @@ class ParsedUri:
 # Public build helpers
 # ---------------------------------------------------------------------------
 
+
 def build_bookmark_uri(unique_id: str) -> str:
     """Return ``bookmark-memex://bookmark/<unique_id>``."""
     return _build("bookmark", unique_id)
@@ -77,6 +78,7 @@ build_annotation_uri = build_marginalia_uri
 # Parser
 # ---------------------------------------------------------------------------
 
+
 def parse_uri(uri: str) -> ParsedUri:
     """Parse a bookmark-memex URI into its components.
 
@@ -89,9 +91,7 @@ def parse_uri(uri: str) -> ParsedUri:
 
     scheme, _, rest = uri.partition("://")
     if scheme != SCHEME:
-        raise InvalidUriError(
-            f"expected scheme {SCHEME!r}, got {scheme!r} in {uri!r}"
-        )
+        raise InvalidUriError(f"expected scheme {SCHEME!r}, got {scheme!r} in {uri!r}")
 
     kind, _, tail = rest.partition("/")
     kind = _LEGACY_KIND_ALIASES.get(kind, kind)
@@ -113,6 +113,7 @@ def parse_uri(uri: str) -> ParsedUri:
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _build(kind: str, ident: str) -> str:
     if not ident:

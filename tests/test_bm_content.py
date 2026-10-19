@@ -35,6 +35,7 @@ from bookmark_memex.content import (
 # compress / decompress
 # ---------------------------------------------------------------------------
 
+
 class TestCompressDecompress:
     """Test zlib compression and decompression."""
 
@@ -69,6 +70,7 @@ class TestCompressDecompress:
 # content_hash
 # ---------------------------------------------------------------------------
 
+
 class TestContentHash:
     """Test SHA-256 content hashing."""
 
@@ -101,6 +103,7 @@ class TestContentHash:
 # ---------------------------------------------------------------------------
 # html_to_markdown
 # ---------------------------------------------------------------------------
+
 
 class TestHtmlToMarkdown:
     """Test HTML-to-Markdown conversion."""
@@ -167,6 +170,7 @@ class TestHtmlToMarkdown:
 # extract_text
 # ---------------------------------------------------------------------------
 
+
 class TestExtractText:
     """Test markdown-to-plain-text stripping."""
 
@@ -226,6 +230,7 @@ class TestExtractText:
 # extract_pdf_text
 # ---------------------------------------------------------------------------
 
+
 class TestExtractPdfText:
     """Test PDF text extraction (optional dependency)."""
 
@@ -242,6 +247,7 @@ class TestExtractPdfText:
 # ---------------------------------------------------------------------------
 # ContentFetcher
 # ---------------------------------------------------------------------------
+
 
 class TestContentFetcherInit:
     """Test ContentFetcher construction."""
@@ -280,7 +286,9 @@ class TestContentFetcherFetch:
     def fetcher(self):
         return ContentFetcher(timeout=5)
 
-    def _mock_response(self, status=200, body=b"", content_type="text/html", encoding="utf-8"):
+    def _mock_response(
+        self, status=200, body=b"", content_type="text/html", encoding="utf-8"
+    ):
         resp = MagicMock()
         resp.status_code = status
         resp.content = body
@@ -290,7 +298,9 @@ class TestContentFetcherFetch:
 
     def test_success_200(self, fetcher):
         """200 response gives success=True and html_content."""
-        body = b"<html><head><title>Page Title</title></head><body>content</body></html>"
+        body = (
+            b"<html><head><title>Page Title</title></head><body>content</body></html>"
+        )
         resp = self._mock_response(200, body)
         with patch.object(fetcher.session, "get", return_value=resp):
             result = fetcher.fetch("https://example.com")
@@ -317,7 +327,9 @@ class TestContentFetcherFetch:
 
     def test_connection_error(self, fetcher):
         """requests.ConnectionError gives success=False."""
-        with patch.object(fetcher.session, "get", side_effect=requests.ConnectionError()):
+        with patch.object(
+            fetcher.session, "get", side_effect=requests.ConnectionError()
+        ):
             result = fetcher.fetch("https://unreachable.example.com")
         assert result["success"] is False
         assert result["error"] is not None
@@ -332,7 +344,9 @@ class TestContentFetcherFetch:
 
     def test_content_type_extracted(self, fetcher):
         """content_type field mirrors the Content-Type header."""
-        resp = self._mock_response(200, b"<html></html>", content_type="text/html; charset=utf-8")
+        resp = self._mock_response(
+            200, b"<html></html>", content_type="text/html; charset=utf-8"
+        )
         with patch.object(fetcher.session, "get", return_value=resp):
             result = fetcher.fetch("https://example.com")
         assert result["content_type"] == "text/html; charset=utf-8"
@@ -361,7 +375,7 @@ class TestContentFetcherFetchAndProcess:
             result = fetcher.fetch_and_process("https://example.com")
 
         assert result["success"] is True
-        assert result["html_content"] is not None   # compressed bytes
+        assert result["html_content"] is not None  # compressed bytes
         assert result["markdown_content"] is not None
         assert result["content_hash"] is not None
         assert result["content_length"] > 0
@@ -384,7 +398,9 @@ class TestContentFetcherFetchAndProcess:
 
     def test_failure_propagates_error(self, fetcher):
         """Failed fetch gives success=False and no html_content."""
-        with patch.object(fetcher.session, "get", side_effect=requests.ConnectionError()):
+        with patch.object(
+            fetcher.session, "get", side_effect=requests.ConnectionError()
+        ):
             result = fetcher.fetch_and_process("https://unreachable.example.com")
         assert result["success"] is False
         assert result["html_content"] is None
@@ -394,6 +410,7 @@ class TestContentFetcherFetchAndProcess:
 # ---------------------------------------------------------------------------
 # Re-exports from content/__init__.py
 # ---------------------------------------------------------------------------
+
 
 class TestReExports:
     """Verify that content/__init__.py re-exports all public symbols."""

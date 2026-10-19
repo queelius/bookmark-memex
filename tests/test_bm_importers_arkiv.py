@@ -4,6 +4,7 @@ Covers bundle format auto-detection (directory / .zip / .tar.gz / .jsonl /
 .jsonl.gz), UUID-stable annotation round-trip, bookmark merge on re-import,
 and orphan-annotation survival.
 """
+
 from __future__ import annotations
 
 import gzip
@@ -65,12 +66,17 @@ def fresh_db(tmp_path):
 
 
 def test_parse_unique_id_from_uri_normal():
-    assert _parse_bookmark_unique_id_from_uri("bookmark-memex://bookmark/abcdef0123456789") == "abcdef0123456789"
+    assert (
+        _parse_bookmark_unique_id_from_uri("bookmark-memex://bookmark/abcdef0123456789")
+        == "abcdef0123456789"
+    )
 
 
 def test_parse_unique_id_from_uri_with_fragment():
     assert (
-        _parse_bookmark_unique_id_from_uri("bookmark-memex://bookmark/abcdef0123456789#section=x")
+        _parse_bookmark_unique_id_from_uri(
+            "bookmark-memex://bookmark/abcdef0123456789#section=x"
+        )
         == "abcdef0123456789"
     )
 
@@ -189,7 +195,6 @@ def test_import_tar_gz_bundle(src_db, fresh_db, tmp_path):
     assert stats["bookmarks_added"] == 2
 
 
-
 @pytest.mark.parametrize("ext", ["zip", "tar.gz"])
 def test_import_bundle_missing_records_member_raises(fresh_db, tmp_path, ext):
     """A packed bundle without records.jsonl is an error, as it is for a
@@ -207,6 +212,7 @@ def test_import_bundle_missing_records_member_raises(fresh_db, tmp_path, ext):
     assert detect(out) is False
     with pytest.raises(FileNotFoundError):
         import_arkiv(fresh_db, out)
+
 
 def test_roundtrip_preserves_added_and_visit_count(tmp_path):
     """BM-5: a restore must not reset 'added' to the import date or zero out

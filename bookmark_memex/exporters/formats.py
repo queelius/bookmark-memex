@@ -4,6 +4,7 @@ Provides serializers for JSON, CSV, plain text, Markdown, and M3U playlist.
 All functions accept an optional ``bookmark_ids`` list: when given, only those
 bookmarks are exported; when omitted, all active bookmarks are exported.
 """
+
 from __future__ import annotations
 
 import csv
@@ -42,7 +43,9 @@ def export_json(db, path: Path, bookmark_ids: Optional[list[int]] = None) -> Non
     """Write a JSON array of bookmark dicts to *path*."""
     bookmarks = _get_bookmarks(db, bookmark_ids)
     records = [_bookmark_to_dict(b) for b in bookmarks]
-    Path(path).write_text(json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8")
+    Path(path).write_text(
+        json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def export_csv(db, path: Path, bookmark_ids: Optional[list[int]] = None) -> None:
@@ -52,13 +55,15 @@ def export_csv(db, path: Path, bookmark_ids: Optional[list[int]] = None) -> None
         writer = csv.writer(f)
         writer.writerow(["url", "title", "tags", "description", "starred"])
         for b in bookmarks:
-            writer.writerow([
-                b.url,
-                b.title,
-                ",".join(b.tag_names),
-                b.description or "",
-                str(b.starred).lower(),
-            ])
+            writer.writerow(
+                [
+                    b.url,
+                    b.title,
+                    ",".join(b.tag_names),
+                    b.description or "",
+                    str(b.starred).lower(),
+                ]
+            )
 
 
 def export_text(db, path: Path, bookmark_ids: Optional[list[int]] = None) -> None:

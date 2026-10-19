@@ -3,6 +3,7 @@
 Parser tests exercise build_parser() without running any commands.
 Command tests verify cmd_import and cmd_sql against a real (temp) database.
 """
+
 from __future__ import annotations
 
 import json
@@ -33,7 +34,9 @@ class TestParser:
         assert args.format is None
 
     def test_import_format_explicit(self):
-        args = build_parser().parse_args(["import", "bookmarks.html", "--format", "html"])
+        args = build_parser().parse_args(
+            ["import", "bookmarks.html", "--format", "html"]
+        )
         assert args.format == "html"
 
     def test_export_json(self):
@@ -47,7 +50,9 @@ class TestParser:
         assert args.format is None
 
     def test_export_single_flag(self):
-        args = build_parser().parse_args(["export", "out.html", "--format", "html-app", "--single"])
+        args = build_parser().parse_args(
+            ["export", "out.html", "--format", "html-app", "--single"]
+        )
         assert args.single is True
 
     def test_export_single_flag_default_false(self):
@@ -226,7 +231,9 @@ def test_cmd_sql_select(db_with_data):
     """cmd_sql on SELECT COUNT(*) prints a row count."""
     from bookmark_memex.cli import cmd_sql
 
-    args = SimpleNamespace(db=db_with_data, query="SELECT COUNT(*) FROM bookmarks", output="table")
+    args = SimpleNamespace(
+        db=db_with_data, query="SELECT COUNT(*) FROM bookmarks", output="table"
+    )
     buf = StringIO()
     with patch("sys.stdout", buf):
         cmd_sql(args)
@@ -239,7 +246,9 @@ def test_cmd_sql_json_output(db_with_data):
     """cmd_sql with -o json emits valid JSON rows."""
     from bookmark_memex.cli import cmd_sql
 
-    args = SimpleNamespace(db=db_with_data, query="SELECT url FROM bookmarks ORDER BY url", output="json")
+    args = SimpleNamespace(
+        db=db_with_data, query="SELECT url FROM bookmarks ORDER BY url", output="json"
+    )
     buf = StringIO()
     with patch("sys.stdout", buf):
         cmd_sql(args)
@@ -255,7 +264,11 @@ def test_cmd_sql_csv_output(db_with_data):
     import csv as csv_mod
     from bookmark_memex.cli import cmd_sql
 
-    args = SimpleNamespace(db=db_with_data, query="SELECT url, title FROM bookmarks ORDER BY url", output="csv")
+    args = SimpleNamespace(
+        db=db_with_data,
+        query="SELECT url, title FROM bookmarks ORDER BY url",
+        output="csv",
+    )
     buf = StringIO()
     with patch("sys.stdout", buf):
         cmd_sql(args)
@@ -321,7 +334,9 @@ def test_main_dispatches_db_info(db_with_data, monkeypatch, capsys):
     """main() with 'db info' runs and prints table info."""
     from bookmark_memex import cli as cli_mod
 
-    monkeypatch.setattr(sys, "argv", ["bookmark-memex", "--db", db_with_data, "db", "info"])
+    monkeypatch.setattr(
+        sys, "argv", ["bookmark-memex", "--db", db_with_data, "db", "info"]
+    )
     cli_mod.main()
     captured = capsys.readouterr()
     assert "bookmarks" in captured.out

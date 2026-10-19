@@ -6,6 +6,7 @@ and launching the MCP/web servers.
 
 Entry point: bookmark-memex (see pyproject.toml)
 """
+
 from __future__ import annotations
 
 import csv
@@ -295,7 +296,10 @@ def cmd_import(args: Namespace) -> None:
 
 def cmd_import_browser(args: Namespace) -> None:
     """Import bookmarks from a browser profile."""
-    from bookmark_memex.importers.browser import import_browser_bookmarks, list_browser_profiles
+    from bookmark_memex.importers.browser import (
+        import_browser_bookmarks,
+        list_browser_profiles,
+    )
 
     if getattr(args, "list_profiles", False):
         profiles = list_browser_profiles(getattr(args, "browser", None))

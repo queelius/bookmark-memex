@@ -26,6 +26,7 @@ llm-memex uses the directory form, and only because it has to ship a
 sibling ``assets/`` directory for media blocks. Bookmarks have no peer
 assets, so single-file is the natural fit.
 """
+
 from __future__ import annotations
 
 import base64
@@ -103,9 +104,7 @@ def _sanitize_for_export(db_path: Path) -> None:
 
 def _gzip_file(src: Path, dst: Path, level: int = _DB_GZIP_LEVEL) -> None:
     """Stream src → gzip → dst, then delete src."""
-    with open(src, "rb") as fin, gzip.open(
-        str(dst), "wb", compresslevel=level
-    ) as fout:
+    with open(src, "rb") as fin, gzip.open(str(dst), "wb", compresslevel=level) as fout:
         shutil.copyfileobj(fin, fout, length=1024 * 1024)
     src.unlink()
 
@@ -160,9 +159,7 @@ def _inline_script_src(html: str, filename: str, body: str) -> str:
     marker = f'<script src="{filename}"></script>'
     # Guard: only one occurrence expected in the template.
     if marker not in html:
-        raise RuntimeError(
-            f"SPA template missing expected '{marker}'; template drift?"
-        )
+        raise RuntimeError(f"SPA template missing expected '{marker}'; template drift?")
     # The closing </script> in the replacement must not be misread by the
     # HTML parser if `body` itself contains "</script>" — but sql-wasm.js
     # does not, and we control the template. Still, escape defensively.
@@ -175,9 +172,7 @@ def _fill_base64_script(html: str, element_id: str, data: bytes) -> str:
     """Fill ``<script id="<id>" type="application/base64"></script>``."""
     marker = f'<script id="{element_id}" type="application/base64"></script>'
     if marker not in html:
-        raise RuntimeError(
-            f"SPA template missing expected '{marker}'; template drift?"
-        )
+        raise RuntimeError(f"SPA template missing expected '{marker}'; template drift?")
     b64 = base64.b64encode(data).decode("ascii")
     replacement = (
         f'<script id="{element_id}" type="application/base64">\n{b64}\n</script>'

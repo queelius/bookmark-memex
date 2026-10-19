@@ -3,6 +3,7 @@
 Tests exercise the pure-Python sync functions returned by _create_tools
 directly, without starting an MCP server.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -31,6 +32,7 @@ def db_with_data(tmp_db_path):
 def tools(db_with_data):
     """Return the tools dict for the test database."""
     from bookmark_memex.mcp import _create_tools
+
     _, db_path = db_with_data
     return _create_tools(db_path)
 
@@ -82,7 +84,11 @@ def test_execute_sql_returns_dicts(tools):
 def test_execute_sql_rejects_delete(tools):
     result = tools["execute_sql"]("DELETE FROM bookmarks")
     assert isinstance(result, str)
-    assert "error" in result.lower() or "not allowed" in result.lower() or "SELECT" in result
+    assert (
+        "error" in result.lower()
+        or "not allowed" in result.lower()
+        or "SELECT" in result
+    )
 
 
 def test_execute_sql_rejects_drop(tools):
@@ -184,7 +190,9 @@ def test_get_record_marginalia_not_found_raises(tools):
 
 
 def test_mutate_add_succeeds(tools):
-    result = tools["mutate"]([{"op": "add", "url": "https://new-site.example.com", "title": "New"}])
+    result = tools["mutate"](
+        [{"op": "add", "url": "https://new-site.example.com", "title": "New"}]
+    )
     assert result["total"] == 1
     assert result["succeeded"] == 1
     assert len(result["results"]) == 1
@@ -226,7 +234,9 @@ def test_mutate_soft_delete_hides_from_list_but_stays_resolvable(tools, db_with_
     assert tools["get_record"]("bookmark", uid)["archived_at"] is not None
 
 
-def test_mutate_soft_delete_record_still_exists_with_include_archived(tools, db_with_data):
+def test_mutate_soft_delete_record_still_exists_with_include_archived(
+    tools, db_with_data
+):
     db, _ = db_with_data
     bm = db.list()[0]
 
@@ -352,9 +362,15 @@ def test_mutate_add_marginalia_creates_note(tools, db_with_data):
     db, _ = db_with_data
     bm = db.list()[0]
 
-    result = tools["mutate"]([
-        {"op": "add_marginalia", "bookmark_unique_id": bm.unique_id, "text": "MCP note"}
-    ])
+    result = tools["mutate"](
+        [
+            {
+                "op": "add_marginalia",
+                "bookmark_unique_id": bm.unique_id,
+                "text": "MCP note",
+            }
+        ]
+    )
     assert result["succeeded"] == 1
 
     notes = db.list_marginalia(bm.unique_id)
@@ -366,9 +382,9 @@ def test_mutate_annotate_legacy_alias_still_works(tools, db_with_data):
     db, _ = db_with_data
     bm = db.list()[0]
 
-    result = tools["mutate"]([
-        {"op": "annotate", "bookmark_unique_id": bm.unique_id, "text": "Legacy call"}
-    ])
+    result = tools["mutate"](
+        [{"op": "annotate", "bookmark_unique_id": bm.unique_id, "text": "Legacy call"}]
+    )
     assert result["succeeded"] == 1
 
     notes = db.list_marginalia(bm.unique_id)
@@ -380,9 +396,9 @@ def test_mutate_update_marginalia_rewrites_text(tools, db_with_data):
     bm = db.list()[0]
     note = db.add_marginalia(bm.unique_id, "original")
 
-    result = tools["mutate"]([
-        {"op": "update_marginalia", "id": note.id, "text": "revised"}
-    ])
+    result = tools["mutate"](
+        [{"op": "update_marginalia", "id": note.id, "text": "revised"}]
+    )
     assert result["succeeded"] == 1
 
     refreshed = db.list_marginalia(bm.unique_id)
@@ -394,9 +410,7 @@ def test_mutate_delete_marginalia_soft_deletes(tools, db_with_data):
     bm = db.list()[0]
     note = db.add_marginalia(bm.unique_id, "to remove")
 
-    result = tools["mutate"]([
-        {"op": "delete_marginalia", "id": note.id}
-    ])
+    result = tools["mutate"]([{"op": "delete_marginalia", "id": note.id}])
     assert result["succeeded"] == 1
 
     active = db.list_marginalia(bm.unique_id)
@@ -411,9 +425,7 @@ def test_mutate_restore_marginalia_reactivates(tools, db_with_data):
     note = db.add_marginalia(bm.unique_id, "to restore")
     db.delete_marginalia(note.id)
 
-    result = tools["mutate"]([
-        {"op": "restore_marginalia", "id": note.id}
-    ])
+    result = tools["mutate"]([{"op": "restore_marginalia", "id": note.id}])
     assert result["succeeded"] == 1
 
     active = db.list_marginalia(bm.unique_id)
@@ -469,6 +481,7 @@ def test_mutate_empty_batch(tools):
 def test_create_server_returns_fastmcp(tmp_db_path):
     from bookmark_memex.mcp import create_server
     import fastmcp
+
     server = create_server(tmp_db_path)
     assert isinstance(server, fastmcp.FastMCP)
 
@@ -551,12 +564,20 @@ def test_get_record_marginalia_on_readonly_db(db_with_data):
 def test_create_server_has_required_tools(tmp_db_path):
     import asyncio
     from bookmark_memex.mcp import create_server
+
     server = create_server(tmp_db_path)
     # FastMCP 3.x renamed the introspection method to list_tools()
     # which returns a list of FunctionTool objects, not a dict.
     tools = asyncio.run(server.list_tools())
     tool_names = {t.name for t in tools}
-    required = {"get_schema", "execute_sql", "get_record", "mutate", "import_bookmarks", "export_bookmarks"}
+    required = {
+        "get_schema",
+        "execute_sql",
+        "get_record",
+        "mutate",
+        "import_bookmarks",
+        "export_bookmarks",
+    }
     assert required.issubset(tool_names)
 
 
@@ -579,15 +600,23 @@ def test_every_declared_kind_resolves(tools, db_with_data):
     db, db_path = db_with_data
     db.merge_history_url(unique_id="hu1", url="https://h.example")
     db.merge_history_visit(
-        unique_id="hv1", url_unique_id="hu1", visited_at=datetime(2026, 1, 1),
-        source_type="chrome", source_name="test",
+        unique_id="hv1",
+        url_unique_id="hu1",
+        visited_at=datetime(2026, 1, 1),
+        source_type="chrome",
+        source_name="test",
     )
     kinds = tools["get_record_kinds"]()["kinds"]
-    assert {k["kind"] for k in kinds} == {"bookmark", "marginalia", "history-url", "visit"}
+    assert {k["kind"] for k in kinds} == {
+        "bookmark",
+        "marginalia",
+        "history-url",
+        "visit",
+    }
     with sqlite3.connect(db_path) as conn:
         for k in kinds:
             (raw_id,) = conn.execute(
-                f'SELECT `{k["id_column"]}` FROM `{k["table"]}` LIMIT 1'
+                f"SELECT `{k['id_column']}` FROM `{k['table']}` LIMIT 1"
             ).fetchone()
             assert isinstance(tools["get_record"](k["kind"], raw_id), dict), k
 

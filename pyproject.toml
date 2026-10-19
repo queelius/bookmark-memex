@@ -48,9 +48,22 @@ include = ["bookmark_memex", "bookmark_memex.*"]
 "bookmark_memex.exporters.vendored" = ["*.js", "*.wasm"]
 "bookmark_memex.exporters.templates" = ["*.html"]
 
-[tool.black]
-line-length = 120
-target-version = ['py310', 'py311', 'py312']
+[tool.ruff]
+target-version = "py310"
+# 88, not the 120 the old black/flake8 configs declared: no formatter was ever
+# applied at 120, and the code as written already wraps at 88.
+line-length = 88
+# plugins/ is the btk-era plugin set; it imports the removed btk package.
+extend-exclude = ["plugins"]
+
+[tool.ruff.lint]
+# The policy the old .flake8 encoded (pycodestyle + pyflakes), carried over
+# as-is rather than widened to ruff's own default selection.
+select = ["E", "W", "F"]
+ignore = ["E501"]  # long lines are the formatter's call, not the linter's
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]  # re-exports are intentional
 
 [tool.mypy]
 python_version = "3.10"

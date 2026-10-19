@@ -16,7 +16,9 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def filter_active(query: Query, model: Type, *, include_archived: bool = False) -> Query:
+def filter_active(
+    query: Query, model: Type, *, include_archived: bool = False
+) -> Query:
     """Filter a query to exclude archived rows unless *include_archived* is True."""
     if include_archived:
         return query

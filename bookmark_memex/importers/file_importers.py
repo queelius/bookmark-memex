@@ -4,6 +4,7 @@ Supports Netscape HTML, JSON, CSV, Markdown, and plain-text URL lists.
 Each importer returns the count of bookmarks successfully added (new or
 merged), and records the import source on every bookmark it touches.
 """
+
 from __future__ import annotations
 
 import csv
@@ -152,7 +153,11 @@ class _NetscapeParser(HTMLParser):
             href = attr_dict.get("href", "")
             title = ""  # filled in handle_data
             raw_tags = attr_dict.get("tags", "")
-            tags = [t.strip() for t in raw_tags.split(",") if t.strip()] if raw_tags else []
+            tags = (
+                [t.strip() for t in raw_tags.split(",") if t.strip()]
+                if raw_tags
+                else []
+            )
             folder_path = "/".join(f for f in self._folder_stack if f) or None
 
             self.bookmarks.append(

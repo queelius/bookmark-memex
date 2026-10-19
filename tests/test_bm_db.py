@@ -434,7 +434,9 @@ def test_list_annotations_only_returns_for_target_bookmark(db):
 
 def test_log_event_does_not_raise(db):
     """log_event should complete without error."""
-    db.log_event("add", "bookmark", entity_id="abc123", data={"url": "https://example.com"})
+    db.log_event(
+        "add", "bookmark", entity_id="abc123", data={"url": "https://example.com"}
+    )
 
 
 def test_log_event_with_minimal_args(db):

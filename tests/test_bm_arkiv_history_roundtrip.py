@@ -12,6 +12,7 @@ side) and exercise:
     bookmark_memex.db.merge_marginalia (extended)
     bookmark_memex.importers.arkiv.import_arkiv (extended)
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -162,9 +163,7 @@ class TestMergeHistoryUrl:
     def test_bumps_typed_count_monotonically(self, tmp_db_path: str) -> None:
         db = Database(tmp_db_path)
         uid = "0000000000000004"
-        db.merge_history_url(
-            unique_id=uid, url="https://t.example.com/", typed_count=2
-        )
+        db.merge_history_url(unique_id=uid, url="https://t.example.com/", typed_count=2)
         id_, _ = db.merge_history_url(
             unique_id=uid, url="https://t.example.com/", typed_count=5
         )
@@ -194,12 +193,18 @@ class TestMergeHistoryVisit:
         v_uuid = uuid.uuid4().hex
         t = datetime(2026, 4, 20, 9, 0, 0)
         id1, ins1 = db.merge_history_visit(
-            unique_id=v_uuid, url_unique_id=url_uid, visited_at=t,
-            source_type="chrome", source_name="Chrome/Default",
+            unique_id=v_uuid,
+            url_unique_id=url_uid,
+            visited_at=t,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
         id2, ins2 = db.merge_history_visit(
-            unique_id=v_uuid, url_unique_id=url_uid, visited_at=t,
-            source_type="chrome", source_name="Chrome/Default",
+            unique_id=v_uuid,
+            url_unique_id=url_uid,
+            visited_at=t,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
         assert ins1 is True
         assert ins2 is False
@@ -229,12 +234,18 @@ class TestMergeHistoryVisit:
 
         t = datetime(2026, 4, 20, 9, 0, 0)
         id1, _ = db.merge_history_visit(
-            unique_id="aaa1", url_unique_id=url_uid, visited_at=t,
-            source_type="chrome", source_name="Chrome/Default",
+            unique_id="aaa1",
+            url_unique_id=url_uid,
+            visited_at=t,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
         id2, ins2 = db.merge_history_visit(
-            unique_id="bbb2", url_unique_id=url_uid, visited_at=t,
-            source_type="chrome", source_name="Chrome/Default",
+            unique_id="bbb2",
+            url_unique_id=url_uid,
+            visited_at=t,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
         assert id2 == id1
         assert ins2 is False
@@ -246,16 +257,20 @@ class TestMergeHistoryVisit:
 
         first_uuid = uuid.uuid4().hex
         first_id, _ = db.merge_history_visit(
-            unique_id=first_uuid, url_unique_id=url_uid,
+            unique_id=first_uuid,
+            url_unique_id=url_uid,
             visited_at=datetime(2026, 4, 20, 9, 0, 0),
-            source_type="chrome", source_name="Chrome/Default",
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
 
         second_uuid = uuid.uuid4().hex
         second_id, _ = db.merge_history_visit(
-            unique_id=second_uuid, url_unique_id=url_uid,
+            unique_id=second_uuid,
+            url_unique_id=url_uid,
             visited_at=datetime(2026, 4, 20, 9, 0, 5),
-            source_type="chrome", source_name="Chrome/Default",
+            source_type="chrome",
+            source_name="Chrome/Default",
             from_visit_unique_id=first_uuid,
         )
 
@@ -309,9 +324,7 @@ class TestMergeMarginaliaHistory:
 
 
 class TestRoundTrip:
-    def test_history_roundtrips(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_history_roundtrips(self, tmp_db_path: str, tmp_path: Path) -> None:
         src = Database(tmp_db_path)
         _populate_history(src, tmp_path)
 
@@ -339,9 +352,7 @@ class TestRoundTrip:
             ("https://search.example.com/q=memex", 1),
         ]
 
-    def test_referrer_chain_roundtrips(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_referrer_chain_roundtrips(self, tmp_db_path: str, tmp_path: Path) -> None:
         src = Database(tmp_db_path)
         _populate_history(src, tmp_path)
 
@@ -361,13 +372,11 @@ class TestRoundTrip:
         conn.close()
         # Three visits: typed @9:00, link @9:05 (from #1), reload @10:00.
         assert len(rows) == 3
-        assert rows[0][1] is None                     # typed, no referrer
-        assert rows[1][1] is not None                 # link resolves to prior
-        assert rows[2][1] is None                     # reload has no from_visit
+        assert rows[0][1] is None  # typed, no referrer
+        assert rows[1][1] is not None  # link resolves to prior
+        assert rows[2][1] is None  # reload has no from_visit
 
-    def test_idempotent_reimport(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_idempotent_reimport(self, tmp_db_path: str, tmp_path: Path) -> None:
         src = Database(tmp_db_path)
         _populate_history(src, tmp_path)
 
@@ -488,6 +497,7 @@ class TestRoundTrip:
         # Corrupt the bundle: rewrite every visit's history_url_uri to
         # point at a nonexistent history-url.
         import json as _json
+
         jsonl = bundle / "records.jsonl"
         lines = jsonl.read_text().splitlines()
         rewritten = []

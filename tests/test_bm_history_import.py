@@ -13,6 +13,7 @@ Covers:
 - CLI integration (--list, --since, import)
 - Marginalia on history records survives record archive (orphan survival)
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -29,7 +30,11 @@ from bookmark_memex.db import (
     normalize_url,
     normalize_url_for_history,
 )
-from bookmark_memex.importers.browser import BrowserProfile, ChromeImporter, FirefoxImporter
+from bookmark_memex.importers.browser import (
+    BrowserProfile,
+    ChromeImporter,
+    FirefoxImporter,
+)
 from bookmark_memex.importers.browser_history import (
     HistoryImportResult,
     _datetime_to_chrome_us,
@@ -69,7 +74,9 @@ class TestNormalizeUrlForHistory:
 
     def test_preserves_non_tracker_params(self) -> None:
         u = "https://example.com/search?q=test&page=2"
-        assert normalize_url_for_history(u) == "https://example.com/search?page=2&q=test"
+        assert (
+            normalize_url_for_history(u) == "https://example.com/search?page=2&q=test"
+        )
 
     def test_unique_id_same_with_or_without_trackers(self) -> None:
         a = generate_history_unique_id("https://example.com/p")
@@ -156,9 +163,7 @@ class TestTransitionDecoding:
 class TestDatabaseHistoryMethods:
     def test_upsert_inserts_when_absent(self, tmp_db_path: str) -> None:
         db = Database(tmp_db_path)
-        row, created = db.upsert_history_url(
-            "https://example.com/x", title="Example"
-        )
+        row, created = db.upsert_history_url("https://example.com/x", title="Example")
         assert created is True
         assert row.url == "https://example.com/x"
         assert row.title == "Example"
@@ -184,9 +189,7 @@ class TestDatabaseHistoryMethods:
     def test_upsert_typed_count_accumulates(self, tmp_db_path: str) -> None:
         db = Database(tmp_db_path)
         db.upsert_history_url("https://example.com/t", typed_count_delta=2)
-        row, _ = db.upsert_history_url(
-            "https://example.com/t", typed_count_delta=3
-        )
+        row, _ = db.upsert_history_url("https://example.com/t", typed_count_delta=3)
         assert row.typed_count == 5
 
     def test_upsert_dedups_by_history_unique_id(self, tmp_db_path: str) -> None:
@@ -266,12 +269,16 @@ class TestDatabaseHistoryMethods:
         t1 = datetime(2026, 4, 20, 10, 0, 0)
 
         v0, _ = db.add_history_visit(
-            url_id=url_row.id, visited_at=t0,
-            source_type="chrome", source_name="Chrome/Default",
+            url_id=url_row.id,
+            visited_at=t0,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
         db.add_history_visit(
-            url_id=url_row.id, visited_at=t1,
-            source_type="chrome", source_name="Chrome/Default",
+            url_id=url_row.id,
+            visited_at=t1,
+            source_type="chrome",
+            source_name="Chrome/Default",
         )
 
         # Hard-delete the earlier visit and confirm aggregates move.
@@ -446,11 +453,15 @@ class TestChromeEndToEnd:
 
         # Transitions correctly decoded into history_visits
         import sqlite3 as sq
+
         conn = sq.connect(tmp_db_path)
         cur = conn.cursor()
-        transitions = [r[0] for r in cur.execute(
-            "SELECT transition FROM history_visits ORDER BY visited_at"
-        ).fetchall()]
+        transitions = [
+            r[0]
+            for r in cur.execute(
+                "SELECT transition FROM history_visits ORDER BY visited_at"
+            ).fetchall()
+        ]
         assert transitions == ["link", "typed", "reload"]
         conn.close()
 
@@ -491,9 +502,7 @@ class TestChromeEndToEnd:
         assert r2.urls_added == 0
         assert r2.urls_updated == 1  # same URL, existed already, counted once
 
-    def test_referrer_chain_resolved(
-        self, tmp_db_path: str, tmp_path: Path
-    ) -> None:
+    def test_referrer_chain_resolved(self, tmp_db_path: str, tmp_path: Path) -> None:
         """visit 2's from_visit = 1 should resolve to our primary key."""
         profile = tmp_path / "Default"
         profile.mkdir()
@@ -696,11 +705,13 @@ class TestHistoryMarginalia:
 
         mid = uuid.uuid4().hex
         with db._session() as s:
-            s.add(Marginalia(
-                id=mid,
-                history_url_id=row.id,
-                text="test note on history URL",
-            ))
+            s.add(
+                Marginalia(
+                    id=mid,
+                    history_url_id=row.id,
+                    text="test note on history URL",
+                )
+            )
 
         with db._session() as s:
             m = s.get(Marginalia, mid)
@@ -709,9 +720,7 @@ class TestHistoryMarginalia:
             assert m.bookmark_id is None
             assert m.history_visit_id is None
 
-    def test_marginalia_survives_history_url_deletion(
-        self, tmp_db_path: str
-    ) -> None:
+    def test_marginalia_survives_history_url_deletion(self, tmp_db_path: str) -> None:
         """ON DELETE SET NULL: deleting the history_url leaves the note with NULL FK."""
         from bookmark_memex.models import Marginalia, HistoryUrl
         import uuid
@@ -721,11 +730,13 @@ class TestHistoryMarginalia:
 
         mid = uuid.uuid4().hex
         with db._session() as s:
-            s.add(Marginalia(
-                id=mid,
-                history_url_id=row.id,
-                text="orphan survivor",
-            ))
+            s.add(
+                Marginalia(
+                    id=mid,
+                    history_url_id=row.id,
+                    text="orphan survivor",
+                )
+            )
 
         with db._session() as s:
             u = s.get(HistoryUrl, row.id)
@@ -744,9 +755,7 @@ class TestHistoryMarginalia:
 
 
 class TestCLIImportHistory:
-    def test_list_flag_prints_profiles(
-        self, tmp_db_path: str, capsys
-    ) -> None:
+    def test_list_flag_prints_profiles(self, tmp_db_path: str, capsys) -> None:
         fake = [
             BrowserProfile(
                 name="Default",
@@ -815,9 +824,7 @@ class TestCLIImportHistory:
         assert "visits seen 1" in out
         assert "added 1" in out
 
-    def test_since_flag_parsed(
-        self, tmp_db_path: str, tmp_path: Path, capsys
-    ) -> None:
+    def test_since_flag_parsed(self, tmp_db_path: str, tmp_path: Path, capsys) -> None:
         profile = tmp_path / "Default"
         profile.mkdir()
         _make_fake_chrome_history(
@@ -858,9 +865,7 @@ class TestCLIImportHistory:
         assert "visits seen 1" in out
         assert "added 1" in out
 
-    def test_since_flag_invalid_value(
-        self, tmp_db_path: str
-    ) -> None:
+    def test_since_flag_invalid_value(self, tmp_db_path: str) -> None:
         from bookmark_memex.cli import cmd_import_history
 
         args = Namespace(
@@ -884,9 +889,7 @@ class TestMcpGetRecord:
         from bookmark_memex.mcp import _create_tools
 
         db = Database(tmp_db_path)
-        row, _ = db.upsert_history_url(
-            "https://mcp.example.com/page", title="MCP"
-        )
+        row, _ = db.upsert_history_url("https://mcp.example.com/page", title="MCP")
         db.add_history_visit(
             url_id=row.id,
             visited_at=datetime(2026, 4, 20, 9, 0, 0),
@@ -923,9 +926,7 @@ class TestMcpGetRecord:
         assert result["transition"] == "typed"
         assert result["url"] == "https://v.example.com/"
         assert result["source_type"] == "chrome"
-        assert result["history_url_uri"].startswith(
-            "bookmark-memex://history-url/"
-        )
+        assert result["history_url_uri"].startswith("bookmark-memex://history-url/")
 
     def test_get_record_history_url_not_found(self, tmp_db_path: str) -> None:
         from bookmark_memex.mcp import _create_tools
@@ -946,19 +947,19 @@ class TestMcpGetRecord:
         row, _ = db.upsert_history_url("https://marg.example.com/")
         mid = uuid.uuid4().hex
         with db._session() as s:
-            s.add(Marginalia(
-                id=mid,
-                history_url_id=row.id,
-                text="note on history",
-            ))
+            s.add(
+                Marginalia(
+                    id=mid,
+                    history_url_id=row.id,
+                    text="note on history",
+                )
+            )
 
         tools = _create_tools(tmp_db_path)
         result = tools["get_record"]("marginalia", mid)
 
         assert result["text"] == "note on history"
-        assert result["history_url_uri"].startswith(
-            "bookmark-memex://history-url/"
-        )
+        assert result["history_url_uri"].startswith("bookmark-memex://history-url/")
         assert "bookmark_uri" not in result  # no bookmark attached
 
 

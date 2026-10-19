@@ -1,4 +1,5 @@
 """Tests for bookmark_memex browser importer (Chrome and Firefox)."""
+
 from __future__ import annotations
 
 import json
@@ -171,9 +172,7 @@ class TestChromeImporterDatabase:
         """Fake Chrome bookmarks land in a real Database."""
         profile = tmp_path / "Default"
         profile.mkdir()
-        data = _make_chrome_bookmarks(
-            [_url_node("Test", "https://test.example.com")]
-        )
+        data = _make_chrome_bookmarks([_url_node("Test", "https://test.example.com")])
         (profile / "Bookmarks").write_text(json.dumps(data))
 
         db = Database(tmp_db_path)
@@ -194,7 +193,9 @@ class TestChromeImporterDatabase:
         assert len(bookmarks) == 1
         assert "test.example.com" in bookmarks[0].url
 
-    def test_duplicate_url_not_double_counted(self, tmp_db_path: str, tmp_path: Path) -> None:
+    def test_duplicate_url_not_double_counted(
+        self, tmp_db_path: str, tmp_path: Path
+    ) -> None:
         """Importing the same URL twice does not add a second row."""
         profile = tmp_path / "Default"
         profile.mkdir()
@@ -271,7 +272,9 @@ class TestChromeImporterDatabase:
             with pytest.raises(ValueError, match="No chrome profiles"):
                 import_browser_bookmarks(db, browser="chrome")
 
-    def test_unknown_profile_name_raises(self, tmp_db_path: str, tmp_path: Path) -> None:
+    def test_unknown_profile_name_raises(
+        self, tmp_db_path: str, tmp_path: Path
+    ) -> None:
         """Requesting a non-existent profile name raises ValueError."""
         fake_profile = BrowserProfile(
             name="Default",
@@ -388,7 +391,9 @@ class TestListBrowserProfiles:
 
         with (
             patch.object(ChromeImporter, "find_profiles", return_value=chrome_profiles),
-            patch.object(FirefoxImporter, "find_profiles", return_value=firefox_profiles),
+            patch.object(
+                FirefoxImporter, "find_profiles", return_value=firefox_profiles
+            ),
         ):
             result = list_browser_profiles("chrome")
 
@@ -413,7 +418,9 @@ class TestListBrowserProfiles:
 
         with (
             patch.object(ChromeImporter, "find_profiles", return_value=chrome_profiles),
-            patch.object(FirefoxImporter, "find_profiles", return_value=firefox_profiles),
+            patch.object(
+                FirefoxImporter, "find_profiles", return_value=firefox_profiles
+            ),
         ):
             result = list_browser_profiles()
 

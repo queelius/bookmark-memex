@@ -54,7 +54,8 @@ def _apply_rename_annotations_to_marginalia(engine) -> None:
         from sqlalchemy import text
 
         names = {
-            r[0] for r in conn.execute(
+            r[0]
+            for r in conn.execute(
                 text(
                     "SELECT name FROM sqlite_master WHERE type='table' "
                     "AND name IN ('annotations', 'marginalia', "
@@ -250,20 +251,45 @@ def generate_unique_id(url: str) -> str:
 # Tracking parameters stripped by :func:`normalize_url_for_history`.
 # Kept as a module-level set so tests and callers can inspect or extend
 # it without patching the function body.
-_HISTORY_TRACKING_PARAMS: frozenset[str] = frozenset({
-    # UTM (Google Analytics and friends)
-    "utm_source", "utm_medium", "utm_campaign", "utm_term",
-    "utm_content", "utm_id", "utm_name", "utm_reader",
-    # Ad-network click IDs
-    "gclid", "gclsrc", "dclid", "fbclid", "msclkid", "yclid", "twclid",
-    "mc_eid", "mc_cid",
-    # HubSpot and similar
-    "_hsenc", "_hsmi", "__hssc", "__hstc", "__hsfp",
-    # Social sharing noise
-    "ref", "ref_src", "ref_url", "igshid", "feature",
-    # Generic share/session pollution
-    "share", "shared", "sharedid",
-})
+_HISTORY_TRACKING_PARAMS: frozenset[str] = frozenset(
+    {
+        # UTM (Google Analytics and friends)
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_term",
+        "utm_content",
+        "utm_id",
+        "utm_name",
+        "utm_reader",
+        # Ad-network click IDs
+        "gclid",
+        "gclsrc",
+        "dclid",
+        "fbclid",
+        "msclkid",
+        "yclid",
+        "twclid",
+        "mc_eid",
+        "mc_cid",
+        # HubSpot and similar
+        "_hsenc",
+        "_hsmi",
+        "__hssc",
+        "__hstc",
+        "__hsfp",
+        # Social sharing noise
+        "ref",
+        "ref_src",
+        "ref_url",
+        "igshid",
+        "feature",
+        # Generic share/session pollution
+        "share",
+        "shared",
+        "sharedid",
+    }
+)
 
 
 def normalize_url_for_history(url: str) -> str:
@@ -281,25 +307,28 @@ def normalize_url_for_history(url: str) -> str:
     parsed = urlparse(url)
 
     params = [
-        (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True)
+        (k, v)
+        for k, v in parse_qsl(parsed.query, keep_blank_values=True)
         if k.lower() not in _HISTORY_TRACKING_PARAMS
     ]
-    stripped = urlunparse((
-        parsed.scheme,
-        parsed.netloc,
-        parsed.path,
-        parsed.params,
-        urlencode(params),
-        "",  # drop fragment; it is client-side anchor noise in history
-    ))
+    stripped = urlunparse(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            urlencode(params),
+            "",  # drop fragment; it is client-side anchor noise in history
+        )
+    )
     return normalize_url(stripped)
 
 
 def generate_history_unique_id(url: str) -> str:
     """Return the first 16 hex characters of sha256(normalize_for_history(url))."""
-    return hashlib.sha256(
-        normalize_url_for_history(url).encode("utf-8")
-    ).hexdigest()[:16]
+    return hashlib.sha256(normalize_url_for_history(url).encode("utf-8")).hexdigest()[
+        :16
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -516,10 +545,13 @@ class Database:
                     existing.added is None or added < existing.added
                 ):
                     existing.added = added
-                if visit_count is not None and visit_count > (existing.visit_count or 0):
+                if visit_count is not None and visit_count > (
+                    existing.visit_count or 0
+                ):
                     existing.visit_count = visit_count
                 if last_visited is not None and (
-                    existing.last_visited is None or last_visited > existing.last_visited
+                    existing.last_visited is None
+                    or last_visited > existing.last_visited
                 ):
                     existing.last_visited = last_visited
 
@@ -613,14 +645,21 @@ class Database:
     # lifecycle/derived counters. Everything else on the model is editable.
     # Derived from the ORM columns so a new column is covered automatically.
     _PROTECTED_UPDATE_FIELDS = frozenset(
-        {"id", "unique_id", "url", "added", "visit_count", "last_visited", "archived_at"}
+        {
+            "id",
+            "unique_id",
+            "url",
+            "added",
+            "visit_count",
+            "last_visited",
+            "archived_at",
+        }
     )
 
     @classmethod
     def _mutable_bookmark_fields(cls) -> frozenset:
         return (
-            frozenset(Bookmark.__table__.columns.keys())
-            - cls._PROTECTED_UPDATE_FIELDS
+            frozenset(Bookmark.__table__.columns.keys()) - cls._PROTECTED_UPDATE_FIELDS
         )
 
     def update(self, bookmark_id: int, **kwargs: Any) -> Optional[Bookmark]:
@@ -754,9 +793,7 @@ class Database:
             s.refresh(note)
             return note
 
-    def update_marginalia(
-        self, uuid: str, text: str
-    ) -> Optional[Marginalia]:
+    def update_marginalia(self, uuid: str, text: str) -> Optional[Marginalia]:
         """Update the note's text and bump ``updated_at``.
 
         Returns the updated row, or ``None`` if no note with that UUID
@@ -838,9 +875,7 @@ class Database:
             bookmark_id: Optional[int] = None
             if bookmark_unique_id is not None:
                 bm = s.execute(
-                    select(Bookmark).where(
-                        Bookmark.unique_id == bookmark_unique_id
-                    )
+                    select(Bookmark).where(Bookmark.unique_id == bookmark_unique_id)
                 ).scalar_one_or_none()
                 if bm is not None:
                     bookmark_id = bm.id
@@ -904,9 +939,7 @@ class Database:
             q = select(Marginalia)
             if bookmark_unique_id is not None:
                 bm = s.execute(
-                    select(Bookmark).where(
-                        Bookmark.unique_id == bookmark_unique_id
-                    )
+                    select(Bookmark).where(Bookmark.unique_id == bookmark_unique_id)
                 ).scalar_one_or_none()
                 if bm is None:
                     return []
@@ -963,9 +996,9 @@ class Database:
         visits_added = 0
         visits_skipped = 0
 
-        url_id_cache: dict[str, int] = {}             # unique_id -> history_urls.id
-        src_to_ours: dict[int, Optional[int]] = {}    # source visit_id -> our id
-        pending_fv: list[tuple[int, int]] = []        # (our id, source from_visit)
+        url_id_cache: dict[str, int] = {}  # unique_id -> history_urls.id
+        src_to_ours: dict[int, Optional[int]] = {}  # source visit_id -> our id
+        pending_fv: list[tuple[int, int]] = []  # (our id, source from_visit)
 
         # Dialect-native INSERT OR IGNORE keeps the dedup clean without
         # raising IntegrityError: on conflict SQLite just skips the row
@@ -1012,25 +1045,25 @@ class Database:
                 vuuid = uuid.uuid4().hex
                 res = s.connection().execute(
                     visit_insert,
-                    [{
-                        "unique_id": vuuid,
-                        "url_id": cached,
-                        "visited_at": entry["visited_at"],
-                        "duration_ms": entry.get("duration_ms"),
-                        "transition": entry.get("transition"),
-                        "from_visit_id": None,
-                        "source_type": source_type,
-                        "source_name": source_name,
-                        "imported_at": _utcnow(),
-                    }],
+                    [
+                        {
+                            "unique_id": vuuid,
+                            "url_id": cached,
+                            "visited_at": entry["visited_at"],
+                            "duration_ms": entry.get("duration_ms"),
+                            "transition": entry.get("transition"),
+                            "from_visit_id": None,
+                            "source_type": source_type,
+                            "source_name": source_name,
+                            "imported_at": _utcnow(),
+                        }
+                    ],
                 )
 
                 inserted = res.rowcount == 1
                 if inserted:
                     our_id = s.execute(
-                        select(HistoryVisit.id).where(
-                            HistoryVisit.unique_id == vuuid
-                        )
+                        select(HistoryVisit.id).where(HistoryVisit.unique_id == vuuid)
                     ).scalar_one()
                     visits_added += 1
                 else:
@@ -1246,9 +1279,7 @@ class Database:
         with self._session() as s:
             return s.get(HistoryVisit, visit_id)
 
-    def get_history_visit_by_unique_id(
-        self, unique_id: str
-    ) -> Optional[HistoryVisit]:
+    def get_history_visit_by_unique_id(self, unique_id: str) -> Optional[HistoryVisit]:
         """Return a history_visits row by unique_id, or None."""
         with self._session() as s:
             return s.execute(

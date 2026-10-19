@@ -1,4 +1,5 @@
 """YouTube URL detector for bookmark-memex."""
+
 from __future__ import annotations
 
 import re
@@ -51,6 +52,10 @@ def detect(url: str, content: Optional[str] = None) -> Optional[dict]:
     # Channel by ID: /channel/<channel_id>
     channel_match = re.fullmatch(r"/channel/([^/]+)", path)
     if channel_match:
-        return {"source": "youtube", "type": "channel", "channel_id": channel_match.group(1)}
+        return {
+            "source": "youtube",
+            "type": "channel",
+            "channel_id": channel_match.group(1),
+        }
 
     return None

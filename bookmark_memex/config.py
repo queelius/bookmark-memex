@@ -12,6 +12,7 @@ Config file format (TOML):
     database = "/path/to/db"
     timeout = 30
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -26,22 +27,28 @@ except ImportError:
 
 # ── XDG helpers ────────────────────────────────────────────────────────────────
 
+
 def _xdg_config() -> str:
     """Return XDG_CONFIG_HOME, defaulting to ~/.config."""
-    return os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
+    return os.environ.get("XDG_CONFIG_HOME") or os.path.join(
+        os.path.expanduser("~"), ".config"
+    )
 
 
 def _xdg_data() -> str:
     """Return XDG_DATA_HOME, defaulting to ~/.local/share."""
-    return os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+    return os.environ.get("XDG_DATA_HOME") or os.path.join(
+        os.path.expanduser("~"), ".local", "share"
+    )
 
 
 # ── Config dataclass ───────────────────────────────────────────────────────────
 
+
 @dataclasses.dataclass
 class Config:
-    database: str = ""         # defaults to XDG_DATA_HOME/bookmark-memex/bookmarks.db
-    detectors_dir: str = ""    # defaults to XDG_CONFIG_HOME/bookmark-memex/detectors
+    database: str = ""  # defaults to XDG_DATA_HOME/bookmark-memex/bookmarks.db
+    detectors_dir: str = ""  # defaults to XDG_CONFIG_HOME/bookmark-memex/detectors
     timeout: int = 10
     user_agent: str = "bookmark-memex/0.1"
     batch_size: int = 100
@@ -51,13 +58,17 @@ class Config:
         if not self.database:
             self.database = os.path.join(_xdg_data(), "bookmark-memex", "bookmarks.db")
         if not self.detectors_dir:
-            self.detectors_dir = os.path.join(_xdg_config(), "bookmark-memex", "detectors")
+            self.detectors_dir = os.path.join(
+                _xdg_config(), "bookmark-memex", "detectors"
+            )
 
     @classmethod
     def load(cls, config_file: Optional[str] = None) -> "Config":
         """Build a Config following the documented priority chain."""
         # Collect known field names (excluding private sentinel)
-        field_names = {f.name for f in dataclasses.fields(cls) if not f.name.startswith("_")}
+        field_names = {
+            f.name for f in dataclasses.fields(cls) if not f.name.startswith("_")
+        }
 
         merged: dict = {}
 

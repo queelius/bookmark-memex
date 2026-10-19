@@ -1,4 +1,5 @@
 """GitHub URL detector for bookmark-memex."""
+
 from __future__ import annotations
 
 import re

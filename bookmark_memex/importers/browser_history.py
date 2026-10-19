@@ -13,6 +13,7 @@ Public API:
     import_history(db, browser="chrome", profile=None, since=None,
                    strip_tracking=True) -> HistoryImportResult
 """
+
 from __future__ import annotations
 
 import logging
@@ -70,14 +71,14 @@ _CHROME_CORE: dict[int, str] = {
     0: "link",
     1: "typed",
     2: "bookmark",
-    3: "subframe",           # auto_subframe
-    4: "subframe",           # manual_subframe
+    3: "subframe",  # auto_subframe
+    4: "subframe",  # manual_subframe
     5: "generated",
-    6: "typed",              # auto_toplevel
+    6: "typed",  # auto_toplevel
     7: "form_submit",
     8: "reload",
-    9: "generated",          # keyword
-    10: "generated",          # keyword_generated
+    9: "generated",  # keyword
+    10: "generated",  # keyword_generated
 }
 
 # Firefox moz_historyvisits.visit_type enum
@@ -86,11 +87,11 @@ _FIREFOX_VISIT_TYPE: dict[int, str] = {
     1: "link",
     2: "typed",
     3: "bookmark",
-    4: "subframe",          # EMBED
-    5: "redirect",          # REDIRECT_PERMANENT
-    6: "redirect",          # REDIRECT_TEMPORARY
+    4: "subframe",  # EMBED
+    5: "redirect",  # REDIRECT_PERMANENT
+    6: "redirect",  # REDIRECT_TEMPORARY
     7: "download",
-    8: "subframe",          # FRAMED_LINK
+    8: "subframe",  # FRAMED_LINK
     9: "reload",
 }
 
@@ -175,9 +176,7 @@ def _read_chrome_history(
         conn = sqlite3.connect(str(temp_db))
         cur = conn.cursor()
 
-        since_us = (
-            _datetime_to_chrome_us(since) if since is not None else None
-        )
+        since_us = _datetime_to_chrome_us(since) if since is not None else None
 
         params: tuple[Any, ...] = ()
         where = ""
@@ -201,16 +200,18 @@ def _read_chrome_history(
             dt = _chrome_us_to_datetime(vtime)
             if dt is None:
                 continue
-            rows.append({
-                "visit_id": int(vid),
-                "visited_at": dt,
-                "from_visit": int(fromv or 0),
-                "transition": _decode_chrome_transition(int(trans or 0)),
-                "duration_ms": int((dur or 0) / 1000) if dur else None,
-                "url": url or "",
-                "title": title or None,
-                "typed_count": int(typed or 0),
-            })
+            rows.append(
+                {
+                    "visit_id": int(vid),
+                    "visited_at": dt,
+                    "from_visit": int(fromv or 0),
+                    "transition": _decode_chrome_transition(int(trans or 0)),
+                    "duration_ms": int((dur or 0) / 1000) if dur else None,
+                    "url": url or "",
+                    "title": title or None,
+                    "typed_count": int(typed or 0),
+                }
+            )
         return rows
     finally:
         # Close the connection on every path (a raised query previously
@@ -242,9 +243,7 @@ def _read_firefox_history(
         conn = sqlite3.connect(str(temp_db))
         cur = conn.cursor()
 
-        since_us = (
-            _datetime_to_firefox_us(since) if since is not None else None
-        )
+        since_us = _datetime_to_firefox_us(since) if since is not None else None
 
         params: tuple[Any, ...] = ()
         where = ""
@@ -268,16 +267,18 @@ def _read_firefox_history(
             dt = _firefox_us_to_datetime(vdate)
             if dt is None:
                 continue
-            rows.append({
-                "visit_id": int(vid),
-                "visited_at": dt,
-                "from_visit": int(fromv or 0),
-                "transition": _decode_firefox_visit_type(int(vtype or 0)),
-                "duration_ms": None,  # Firefox does not record this
-                "url": url or "",
-                "title": title or None,
-                "typed_count": 1 if typed else 0,
-            })
+            rows.append(
+                {
+                    "visit_id": int(vid),
+                    "visited_at": dt,
+                    "from_visit": int(fromv or 0),
+                    "transition": _decode_firefox_visit_type(int(vtype or 0)),
+                    "duration_ms": None,  # Firefox does not record this
+                    "url": url or "",
+                    "title": title or None,
+                    "typed_count": 1 if typed else 0,
+                }
+            )
         return rows
     finally:
         if conn is not None:
@@ -441,4 +442,5 @@ def list_history_profiles(
 ) -> list[dict[str, Any]]:
     """Thin wrapper; history and bookmarks share the same profile layout."""
     from bookmark_memex.importers.browser import list_browser_profiles
+
     return list_browser_profiles(browser)
