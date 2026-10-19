@@ -37,4 +37,3 @@ tmp/
 *.bak
 *.cast
 test_export.*
-plugins/btk.db
