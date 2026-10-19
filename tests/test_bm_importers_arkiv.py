@@ -13,7 +13,6 @@ import json
 import tarfile
 import zipfile
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 

@@ -8,7 +8,6 @@ context. Import cost is low; pypdf is lazy-imported only when needed.
 import re
 import zlib
 import hashlib
-from typing import Optional
 
 
 def compress_html(html_content: bytes) -> bytes:

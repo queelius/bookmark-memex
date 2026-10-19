@@ -25,7 +25,6 @@ from bookmark_memex.exporters.html_app import (
     _EXPORT_TABLE_ALLOWLIST,
     _FTS5_TABLES,
     _prepare_db_bytes,
-    _sanitize_for_export,
     export_html_app,
 )
 

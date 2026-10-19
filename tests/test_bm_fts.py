@@ -111,6 +111,7 @@ def test_rebuild_bookmarks_index_excludes_archived(db, fts):
     db.delete(bm2.id)  # soft delete
     count = fts.rebuild_bookmarks_index()
     assert count == 1
+    assert [r.bookmark_id for r in fts.search("Active")] == [bm1.id]
 
 
 def test_rebuild_bookmarks_index_progress_callback(db, fts):
@@ -178,14 +179,14 @@ def test_search_empty_query_returns_empty(fts):
 
 
 def test_search_by_title_finds_bookmark(db, fts):
-    db.add("https://python.org", title="Python Programming Language", description="")
+    python = db.add(
+        "https://python.org", title="Python Programming Language", description=""
+    )
     db.add("https://rust-lang.org", title="Rust Systems Language", description="")
     fts.rebuild_bookmarks_index()
 
     results = fts.search("Python")
-    ids = [r.bookmark_id for r in results]
-    # should find the Python bookmark
-    assert any(True for r in results if "Python" in r.title)
+    assert [r.bookmark_id for r in results] == [python.id]
 
 
 def test_search_no_results(db, fts):
@@ -293,7 +294,7 @@ def test_reindex_fts_populates_and_search_works(db):
 
 def test_reindex_excludes_archived_bookmarks(db):
     """Soft-deleted bookmarks must not appear in the search index."""
-    keep = db.add("https://example.com/keep", title="keepme")
+    db.add("https://example.com/keep", title="keepme")
     drop = db.add("https://example.com/drop", title="dropme")
     db.delete(drop.id)  # soft delete
     db.reindex_fts()

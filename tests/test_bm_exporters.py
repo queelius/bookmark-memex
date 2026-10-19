@@ -134,14 +134,14 @@ def test_csv_contains_urls(db, tmp_path):
 def test_text_one_url_per_line(db, tmp_path):
     out = tmp_path / "bm.txt"
     export_text(db, out)
-    lines = [l for l in out.read_text().splitlines() if l.strip()]
+    lines = [ln for ln in out.read_text().splitlines() if ln.strip()]
     assert len(lines) == 2
 
 
 def test_text_contains_only_urls(db, tmp_path):
     out = tmp_path / "bm.txt"
     export_text(db, out)
-    lines = [l for l in out.read_text().splitlines() if l.strip()]
+    lines = [ln for ln in out.read_text().splitlines() if ln.strip()]
     for line in lines:
         assert line.startswith("http"), f"Expected URL, got: {line!r}"
 
@@ -163,7 +163,7 @@ def test_markdown_list_items(db, tmp_path):
     export_markdown(db, out)
     content = out.read_text()
     # Each bookmark should produce a list item line
-    lines = [l for l in content.splitlines() if l.startswith("- ")]
+    lines = [ln for ln in content.splitlines() if ln.startswith("- ")]
     assert len(lines) == 2
 
 
@@ -191,7 +191,7 @@ def test_m3u_has_extinf_entries(db, tmp_path):
     out = tmp_path / "playlist.m3u"
     export_m3u(db, out)
     content = out.read_text()
-    extinf_lines = [l for l in content.splitlines() if l.startswith("#EXTINF")]
+    extinf_lines = [ln for ln in content.splitlines() if ln.startswith("#EXTINF")]
     assert len(extinf_lines) == 2
 
 
@@ -226,7 +226,7 @@ def test_export_file_csv(db, tmp_path):
 def test_export_file_text(db, tmp_path):
     out = tmp_path / "bm.txt"
     export_file(db, out, format="text")
-    lines = [l for l in out.read_text().splitlines() if l.strip()]
+    lines = [ln for ln in out.read_text().splitlines() if ln.strip()]
     assert len(lines) == 2
 
 

@@ -29,9 +29,8 @@ from bookmark_memex.models import (
     HistoryUrl,
     HistoryVisit,
     Tag,
-    bookmark_tags,
 )
-from bookmark_memex.soft_delete import archive, hard_delete, restore, filter_active
+from bookmark_memex.soft_delete import archive, hard_delete, restore
 
 
 # ---------------------------------------------------------------------------

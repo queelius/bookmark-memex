@@ -26,7 +26,6 @@ from bookmark_memex.db import Database, generate_history_unique_id
 from bookmark_memex.detectors import run_detectors
 from bookmark_memex.importers.browser import (
     BrowserImporter,
-    BrowserProfile,
     ChromeImporter,
     FirefoxImporter,
 )

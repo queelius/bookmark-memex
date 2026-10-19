@@ -312,7 +312,6 @@ class TestDiscoverCache:
 
     def test_user_detector_overrides_builtin(self, tmp_path, monkeypatch):
         """A user detector with the same filename shadows the built-in."""
-        import bookmark_memex.detectors as det_mod
         from bookmark_memex.detectors import discover, reset_cache
 
         # Create a fake user detectors directory with a 'youtube.py' override

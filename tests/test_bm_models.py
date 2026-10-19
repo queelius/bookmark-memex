@@ -6,10 +6,10 @@ Uses an in-memory SQLite database — no external state needed.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from bookmark_memex.models import (
@@ -22,10 +22,8 @@ from bookmark_memex.models import (
     Marginalia,
     SchemaVersion,
     Tag,
-    bookmark_tags,
 )
 from bookmark_memex.uri import (
-    build_annotation_uri,  # legacy alias (kept for backward-compat test)
     build_bookmark_uri,
     build_marginalia_uri,
 )

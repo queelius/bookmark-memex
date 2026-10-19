@@ -3,10 +3,8 @@ import json
 import tempfile
 import shutil
 import os
-import sys
 from io import StringIO
 from contextlib import redirect_stdout
-from datetime import datetime, timezone
 
 
 @pytest.fixture

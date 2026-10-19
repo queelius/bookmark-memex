@@ -21,7 +21,6 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 from bookmark_memex.db import Database
 from bookmark_memex.exporters.arkiv import export_arkiv

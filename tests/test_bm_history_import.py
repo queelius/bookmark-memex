@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import sqlite3
 from argparse import Namespace
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 

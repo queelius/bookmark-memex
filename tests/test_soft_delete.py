@@ -6,7 +6,6 @@ Uses MagicMock for sessions — no real database needed.
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
-import pytest
 
 from bookmark_memex.soft_delete import (
     filter_active,

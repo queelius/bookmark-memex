@@ -140,6 +140,7 @@ def test_add_title_empty_updated_on_duplicate(db):
     """When the first add has no title and the second does, title gets filled in."""
     bm1 = db.add("https://example.com")  # no title → empty string
     bm2 = db.add("https://example.com", title="Now Has Title")
+    assert bm2.id == bm1.id  # merged into the same record, not a second row
     assert bm2.title == "Now Has Title"
 
 
