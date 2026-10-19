@@ -21,8 +21,9 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict
 
 from bookmark_memex.config import get_config
 from bookmark_memex.db import Database
@@ -51,7 +52,19 @@ _ALLOWED_KEYWORDS: frozenset[str] = frozenset({"SELECT", "WITH", "EXPLAIN"})
 # ---------------------------------------------------------------------------
 
 
-def _create_tools(db_path: str) -> dict[str, Any]:
+class _Tools(TypedDict):
+    """The sync tool table returned by :func:`_create_tools`, keyed by MCP
+    tool name, so each wrapper in :func:`create_server` sees its tool's real
+    signature rather than ``Any``."""
+
+    get_schema: Callable[[], str]
+    execute_sql: Callable[[str, Optional[list[Any]]], list[dict] | str]
+    get_record: Callable[[str, str], dict]
+    get_record_kinds: Callable[[], dict]
+    mutate: Callable[[list[dict]], dict]
+
+
+def _create_tools(db_path: str) -> _Tools:
     """Return a dict of sync tool functions bound to *db_path*.
 
     Keys match the MCP tool names:
@@ -370,7 +383,12 @@ def _create_tools(db_path: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_bookmark_id(db: Database, *, unique_id=None, bid=None) -> int:
+def _resolve_bookmark_id(
+    db: Database,
+    *,
+    unique_id: Optional[str] = None,
+    bid: Optional[int] = None,
+) -> int:
     """Resolve a bookmark op target to its integer id, preferring the durable
     unique_id, and raise if the target does not exist (BM-6: delete/tag/
     restore must honestly fail on a missing target rather than silently
@@ -409,10 +427,10 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
             db, unique_id=op.get("unique_id"), bid=op.get("id")
         )
         fields = {k: v for k, v in op.items() if k not in ("op", "id", "unique_id")}
-        bm = db.update(bm_id, **fields)
-        if bm is None:
+        updated = db.update(bm_id, **fields)
+        if updated is None:
             raise ValueError(f"bookmark id={bm_id} not found for update")
-        return {"id": bm.id}
+        return {"id": updated.id}
 
     if op_type == "delete":
         bid = _resolve_bookmark_id(db, unique_id=op.get("unique_id"), bid=op.get("id"))
@@ -438,10 +456,10 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
         return {"id": note.id, "uri": note.uri}
 
     if op_type == "update_marginalia":
-        note = db.update_marginalia(op["id"], op["text"])
-        if note is None:
+        edited = db.update_marginalia(op["id"], op["text"])
+        if edited is None:
             raise ValueError(f"marginalia id={op['id']!r} not found (or archived)")
-        return {"id": note.id, "uri": note.uri}
+        return {"id": edited.id, "uri": edited.uri}
 
     if op_type == "delete_marginalia":
         if not db.delete_marginalia(op["id"], hard=op.get("hard", False)):

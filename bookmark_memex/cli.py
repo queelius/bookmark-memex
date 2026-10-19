@@ -230,8 +230,9 @@ def build_parser() -> ArgumentParser:
 
 def _resolve_db(args: Namespace) -> str:
     """Return the database path: CLI flag > config default."""
-    if args.db:
-        return args.db
+    db_path: Optional[str] = args.db
+    if db_path:
+        return db_path
     from bookmark_memex.config import get_config
 
     return get_config().database
@@ -386,14 +387,14 @@ def cmd_export(args: Namespace) -> None:
         }
         fmt = ext_map.get(ext, "json")
 
-    # Pass format-specific kwargs; unused ones are dropped by export_file.
-    kwargs = {}
-    if fmt == "html-app":
-        kwargs["single_file"] = not bool(getattr(args, "as_dir", False))
-    if fmt == "arkiv":
-        kwargs["include_history"] = bool(getattr(args, "include_history", False))
-
-    export_file(db, Path(args.path), format=fmt, **kwargs)
+    # Format-specific options; export_file drops the ones a format ignores.
+    export_file(
+        db,
+        Path(args.path),
+        format=fmt,
+        single_file=not bool(getattr(args, "as_dir", False)),
+        include_history=bool(getattr(args, "include_history", False)),
+    )
     print(f"Exported to {args.path} (format: {fmt})")
 
 

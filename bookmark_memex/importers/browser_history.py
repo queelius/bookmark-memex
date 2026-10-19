@@ -26,6 +26,7 @@ from bookmark_memex.db import Database, generate_history_unique_id
 from bookmark_memex.detectors import run_detectors
 from bookmark_memex.importers.browser import (
     BrowserImporter,
+    BrowserProfile,
     ChromeImporter,
     FirefoxImporter,
 )
@@ -345,6 +346,7 @@ def import_history(
     if not profiles:
         raise ValueError(f"No {browser} profiles found on this system")
 
+    chosen: Optional[BrowserProfile]
     if profile is None:
         chosen = next((p for p in profiles if p.is_default), profiles[0])
     else:

@@ -300,6 +300,20 @@ def test_cmd_db_schema(db_with_data, capsys):
     assert "CREATE TABLE" in captured.out
 
 
+@pytest.mark.parametrize("fmt", ["json", "csv", "markdown", "text", "m3u"])
+def test_cmd_export_flat_formats_accept_format_options(db_with_data, tmp_path, fmt):
+    """cmd_export always forwards single_file/include_history; a flat-file
+    format must drop them rather than fail on an unexpected keyword."""
+    from bookmark_memex.cli import cmd_export
+
+    out = tmp_path / "out.dat"
+    args = build_parser().parse_args(
+        ["--db", db_with_data, "export", str(out), "--format", fmt]
+    )
+    cmd_export(args)
+    assert "example.com" in out.read_text()
+
+
 def test_cmd_db_vacuum(db_with_data):
     """cmd_db vacuum runs without error."""
     from bookmark_memex.cli import cmd_db

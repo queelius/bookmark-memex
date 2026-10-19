@@ -9,6 +9,7 @@ that touches bookmark identity uses the same logic.
 
 from __future__ import annotations
 
+import builtins
 import hashlib
 import uuid
 from contextlib import contextmanager
@@ -713,6 +714,8 @@ class Database:
             if bm is not None:
                 restore(s, bm)
 
+    # This method shadows the builtin ``list`` inside the class body, so
+    # annotations on methods defined after it spell ``builtins.list``.
     def list(
         self,
         *,
@@ -739,8 +742,8 @@ class Database:
         self,
         bookmark_id: int,
         *,
-        add: Optional[list[str]] = None,
-        remove: Optional[list[str]] = None,
+        add: Optional[builtins.list[str]] = None,
+        remove: Optional[builtins.list[str]] = None,
     ) -> None:
         """Add and/or remove tags on bookmark *bookmark_id*."""
         with self._session() as s:
@@ -759,7 +762,7 @@ class Database:
                 for t in to_remove:
                     bm.tags.remove(t)
 
-    def list_tags(self) -> list[Tag]:
+    def list_tags(self) -> builtins.list[Tag]:
         """Return all tags ordered by name."""
         with self._session() as s:
             return list(s.execute(select(Tag).order_by(Tag.name)).scalars().all())
@@ -927,7 +930,7 @@ class Database:
         bookmark_unique_id: Optional[str] = None,
         *,
         include_archived: bool = False,
-    ) -> list[Marginalia]:
+    ) -> builtins.list[Marginalia]:
         """Return active notes.
 
         If *bookmark_unique_id* is given, restrict to notes on that
@@ -958,7 +961,7 @@ class Database:
         """Deprecated alias for :meth:`merge_marginalia`."""
         return self.merge_marginalia(*args, **kwargs)
 
-    def get_annotations(self, bookmark_unique_id: str) -> list[Marginalia]:
+    def get_annotations(self, bookmark_unique_id: str) -> builtins.list[Marginalia]:
         """Deprecated alias for :meth:`list_marginalia`."""
         return self.list_marginalia(bookmark_unique_id)
 
@@ -968,7 +971,7 @@ class Database:
 
     def bulk_ingest_history(
         self,
-        entries: "list[dict[str, Any]]",
+        entries: "builtins.list[dict[str, Any]]",
         *,
         source_type: str,
         source_name: str,
@@ -1060,6 +1063,7 @@ class Database:
                 )
 
                 inserted = res.rowcount == 1
+                our_id: Optional[int]
                 if inserted:
                     our_id = s.execute(
                         select(HistoryVisit.id).where(HistoryVisit.unique_id == vuuid)

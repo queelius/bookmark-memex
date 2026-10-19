@@ -34,7 +34,7 @@ make test           # Run all tests
 make test-coverage  # Tests with coverage report
 make lint           # ruff check + ruff format --check (CI runs the same)
 make format         # ruff format (line-length 88)
-make typecheck      # mypy
+make typecheck      # mypy bookmark_memex (CI gates on it too)
 make check          # lint + typecheck
 make clean          # remove build artifacts
 

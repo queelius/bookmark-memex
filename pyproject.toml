@@ -34,7 +34,11 @@ dev = [
     # Exact pin: lint and format output change between releases, and CI
     # installs this extra, so local and CI runs agree. Bump deliberately.
     "ruff==0.17.1",
-    "mypy",
+    # Exact pins for the same reason: new mypy releases and stub updates add
+    # checks, and CI gates on `mypy bookmark_memex`. PyYAML ships no inline
+    # types; the other runtime deps do.
+    "mypy==2.4.0",
+    "types-PyYAML==6.0.12.20260906",
 ]
 
 [project.scripts]

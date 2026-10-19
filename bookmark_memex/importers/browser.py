@@ -390,6 +390,7 @@ def import_browser_bookmarks(
     if not profiles:
         raise ValueError(f"No {browser} profiles found on this system")
 
+    chosen: Optional[BrowserProfile]
     if profile is None:
         chosen = next((p for p in profiles if p.is_default), profiles[0])
     else:
